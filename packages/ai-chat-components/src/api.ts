@@ -1,75 +1,37 @@
-import { type ChatResponse, type ChatRequestOptions, type ChatResponseChunk } from './models.js';
+import { AIChatMessage, AIChatCompletionDelta, AIChatProtocolClient, AIChatCompletion } from '@microsoft/ai-chat-protocol';
 
-export const apiBaseUrl = import.meta.env.VITE_BACKEND_API_URI || '';
+export const apiBaseUrl: string = import.meta.env.VITE_API_URL || '';
 
-export async function getCompletion(options: ChatRequestOptions) {
+export type ChatRequestOptions = {
+  messages: AIChatMessage[];
+  chunkIntervalMs: number;
+  apiUrl: string;
+  stream: boolean;
+};
+
+export async function* getCompletion(options: ChatRequestOptions): Promise<AIChatCompletion> | AsyncGenerator<AIChatCompletionDelta> {
   const apiUrl = options.apiUrl || apiBaseUrl;
-  const response = await fetch(`${apiUrl}/chat`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-      messages: options.messages,
-      stream: options.stream,
-      context: {
-        top: options.top,
-        temperature: options.temperature,
-      },
-    }),
-  });
+  const client = new AIChatProtocolClient(`${apiUrl}/api/chat`);
 
   if (options.stream) {
-    return getChunksFromResponse<ChatResponseChunk>(response as Response, options.chunkIntervalMs);
-  }
+    const result = await client.getStreamedCompletion(options.messages);
 
-  const json: ChatResponse = await response.json();
-  if (response.status > 299 || !response.ok) {
-    throw new Error(json.error || 'Unknown error');
-  }
+    for await (const response of result) {
+      if (!response.delta) {
+        continue;
+      }
 
-  return json;
+      yield new Promise<AIChatCompletionDelta>((resolve) => {
+        setTimeout(() => {
+          resolve(response);
+        }, options.chunkIntervalMs);
+      });
+    }
+  } else {
+    return await client.getCompletion(options.messages);
+  }
 }
 
 export function getCitationUrl(citation: string): string {
-  return `${apiBaseUrl}/content/${citation}`;
-}
-
-export class NdJsonParserStream extends TransformStream<string, JSON> {
-  private buffer: string = '';
-  constructor() {
-    let controller: TransformStreamDefaultController<JSON>;
-    super({
-      start: (_controller) => {
-        controller = _controller;
-      },
-      transform: (chunk) => {
-        const jsonChunks = chunk.split('\n').filter(Boolean);
-        for (const jsonChunk of jsonChunks) {
-          try {
-            this.buffer += jsonChunk;
-            controller.enqueue(JSON.parse(this.buffer));
-            this.buffer = '';
-          } catch {
-            // Invalid JSON, wait for next chunk
-          }
-        }
-      },
-    });
-  }
-}
-
-export async function* getChunksFromResponse<T>(response: Response, intervalMs: number): AsyncGenerator<T, void> {
-  const reader = response.body?.pipeThrough(new TextDecoderStream()).pipeThrough(new NdJsonParserStream()).getReader();
-  if (!reader) {
-    throw new Error('No response body or body is not readable');
-  }
-
-  let value: JSON | undefined;
-  let done: boolean;
-  while ((({ value, done } = await reader.read()), !done)) {
-    yield new Promise<T>((resolve) => {
-      setTimeout(() => {
-        resolve(value as T);
-      }, intervalMs);
-    });
-  }
+  return `${apiBaseUrl}/api/documents/${citation}`;
 }

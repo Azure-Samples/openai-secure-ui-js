@@ -1,24 +1,14 @@
-/* eslint-disable unicorn/template-indent */
 import { LitElement, css, html, nothing } from 'lit';
 import { map } from 'lit/directives/map.js';
 import { repeat } from 'lit/directives/repeat.js';
 import { unsafeSVG } from 'lit/directives/unsafe-svg.js';
 import { customElement, property, state, query } from 'lit/decorators.js';
-import {
-  type ChatRequestOptions,
-  type ChatResponse,
-  type ChatMessage,
-  type ChatResponseChunk,
-  type ChatDebugDetails,
-  type ChatMessageContext,
-} from '../models.js';
-import { getCitationUrl, getCompletion } from '../api.js';
+import { AIChatCompletion, AIChatCompletionDelta, AIChatMessage } from '@microsoft/ai-chat-protocol';
+import { type ChatRequestOptions, getCitationUrl, getCompletion } from '../api.js';
 import { type ParsedMessage, parseMessageIntoHtml } from '../message-parser.js';
 import sendSvg from '../../assets/send.svg?raw';
 import questionSvg from '../../assets/question.svg?raw';
-import lightbulbSvg from '../../assets/lightbulb.svg?raw';
 import newChatSvg from '../../assets/new-chat.svg?raw';
-import './debug.js';
 
 export type ChatComponentState = {
   hasError: boolean;
@@ -35,9 +25,6 @@ export type ChatComponentOptions = ChatRequestOptions & {
     promptSuggestionsTitle: string;
     citationsTitle: string;
     followUpQuestionsTitle: string;
-    showThoughtProcessTitle: string;
-    closeTitle: string;
-    thoughtsTitle: string;
     supportingContentTitle: string;
     chatInputPlaceholder: string;
     chatInputButtonLabel: string;
@@ -50,21 +37,17 @@ export type ChatComponentOptions = ChatRequestOptions & {
 };
 
 export const defaultOptions: ChatComponentOptions = {
-  suggestFollowupQuestions: true,
   enableContentLinks: false,
   stream: false,
   chunkIntervalMs: 30,
   apiUrl: '',
   enablePromptSuggestions: true,
-  promptSuggestions: ['Are you a human?', 'What kind of questions can you answer?', 'Can you help me?'],
+  promptSuggestions: ['How to make cookies?', 'I want a banana cake recipe', 'I bread gluten-free?'],
   messages: [],
   strings: {
     promptSuggestionsTitle: 'Ask anything or try an example',
     citationsTitle: 'Citations:',
     followUpQuestionsTitle: 'Follow-up questions:',
-    showThoughtProcessTitle: 'Show thought process',
-    closeTitle: 'Close',
-    thoughtsTitle: 'Thought process',
     supportingContentTitle: 'Supporting Content',
     chatInputPlaceholder: 'Ask me anything...',
     chatInputButtonLabel: 'Send question',
@@ -95,11 +78,10 @@ export class ChatComponent extends LitElement {
   options: ChatComponentOptions = defaultOptions;
 
   @property() question = '';
-  @property({ type: Array }) messages: ChatMessage[] = [];
+  @property({ type: Array }) messages: AIChatMessage[] = [];
   @state() protected hasError = false;
   @state() protected isLoading = false;
   @state() protected isStreaming = false;
-  @state() protected debugDetails?: ChatDebugDetails;
   @query('.messages') protected messagesElement;
   @query('.chat-input') protected chatInputElement;
 
@@ -112,8 +94,6 @@ export class ChatComponent extends LitElement {
     if (this.options.enableContentLinks) {
       const path = getCitationUrl(citation);
       window.open(path, '_blank');
-    } else {
-      // TODO: open debug details
     }
   }
 
@@ -122,13 +102,6 @@ export class ChatComponent extends LitElement {
       event.preventDefault();
       this.onSendClicked();
     }
-  }
-
-  onShowDebugClicked(context: ChatMessageContext = {}) {
-    this.debugDetails = {
-      thoughts: context.thoughts ?? '',
-      dataPoints: context.data_points ?? [],
-    };
   }
 
   async onSendClicked(isRetry = false) {
@@ -151,29 +124,23 @@ export class ChatComponent extends LitElement {
       const response = await getCompletion({ ...this.options, messages: this.messages });
       if (this.options.stream) {
         this.isStreaming = true;
-        const chunks = response as AsyncGenerator<ChatResponseChunk>;
-        const messages = this.messages;
-        const message: ChatMessage = {
+        const chunks = response as AsyncGenerator<AIChatCompletionDelta>;
+        const { messages } = this;
+        const message: AIChatMessage = {
           content: '',
           role: 'assistant',
-          context: {
-            data_points: [],
-            thoughts: '',
-          },
         };
         for await (const chunk of chunks) {
-          if (chunk.choices[0].delta.context?.data_points) {
-            message.context!.data_points = chunk.choices[0].delta.context?.data_points;
-            message.context!.thoughts = chunk.choices[0].delta.context?.thoughts ?? '';
-          } else if (chunk.choices[0].delta.content) {
-            message.content += chunk.choices[0].delta.content;
+          if (chunk.delta.content) {
+            this.isStreaming = true;
+            message.content += chunk.delta.content;
             this.messages = [...messages, message];
             this.scrollToLastMessage();
           }
         }
       } else {
-        const chatResponse = response as ChatResponse;
-        this.messages = [...this.messages, chatResponse.choices[0].message];
+        const chatResponse = response as AIChatCompletion;
+        this.messages = [...this.messages, chatResponse.message];
         this.scrollToLastMessage();
       }
 
@@ -254,17 +221,7 @@ export class ChatComponent extends LitElement {
     return html`
       <div class="message ${message.role} animation">
         ${message.role === 'assistant'
-          ? html`<slot name="message-header">
-              <div class="debug-buttons">
-                <button
-                  class="button"
-                  @click=${() => this.onShowDebugClicked(message.context)}
-                  title=${this.options.strings.showThoughtProcessTitle}
-                >
-                  ${unsafeSVG(lightbulbSvg)}
-                </button>
-              </div>
-            </slot>`
+          ? html`<slot name="message-header"></slot>`
           : nothing}
         <div class="message-body">
           <div class="content">${message.html}</div>
@@ -284,28 +241,26 @@ export class ChatComponent extends LitElement {
     `;
   };
 
-  protected renderError = () => {
-    return html`
-      <div class="message assistant error">
-        <div class="message-body">
-          <span class="error-message">${this.options.strings.errorMessage}</span>
-          <button @click=${() => this.onSendClicked(true)}>${this.options.strings.retryButton}</button>
-        </div>
+  protected renderError = () => html`
+    <div class="message assistant error">
+      <div class="message-body">
+        <span class="error-message">${this.options.strings.errorMessage}</span>
+        <button @click=${() => this.onSendClicked(true)}>${this.options.strings.retryButton}</button>
       </div>
-    `;
-  };
+    </div>
+  `;
 
-  protected renderCitation = (citation: string, index: number) => {
-    return html`<button class="citation" @click=${() => this.onCitationClicked(citation)}>
+  protected renderCitation = (citation: string, index: number) =>
+    html`<button
+      class="citation"
+      @click=${() => {
+        this.onCitationClicked(citation);
+      }}
+    >
       ${index + 1}. ${citation}
     </button>`;
-  };
 
-  protected renderCitationLink = (citation: string, index: number) => {
-    return html`<button class="citation-link" @click=${() => this.onCitationClicked(citation)}>
-      <sup>[${index}]</sup>
-    </button>`;
-  };
+  protected renderCitationReference = (_citation: string, index: number) => html`<sup>[${index}]</sup>`;
 
   protected renderFollowupQuestions = (questions: string[]) => {
     return questions.length > 0
@@ -361,7 +316,7 @@ export class ChatComponent extends LitElement {
   };
 
   protected override render() {
-    const parsedMessages = this.messages.map((message) => parseMessageIntoHtml(message, this.renderCitationLink));
+    const parsedMessages = this.messages.map((message) => parseMessageIntoHtml(message, this.renderCitationReference));
     return html`
       <section class="chat-container">
         ${this.options.enablePromptSuggestions &&
@@ -376,20 +331,6 @@ export class ChatComponent extends LitElement {
         </div>
         ${this.renderChatInput()}
       </section>
-      ${this.debugDetails
-        ? html`<section class="debug-details">
-            <cba-debug .details=${this.debugDetails} .options=${this.options}>
-              <button
-                slot="close-button"
-                class="button close-button"
-                @click=${() => (this.debugDetails = undefined)}
-                title=${this.options.strings.closeTitle}
-              >
-                X
-              </button>
-            </cba-debug>
-          </section>`
-        : nothing}
     `;
   }
 
@@ -452,6 +393,7 @@ export class ChatComponent extends LitElement {
     }
     svg {
       fill: currentColor;
+      width: 100%;
     }
     button {
       font-size: 1rem;
@@ -474,13 +416,6 @@ export class ChatComponent extends LitElement {
         Roboto,
         'Helvetica Neue',
         sans-serif;
-    }
-    .citation-link {
-      padding: 0;
-      color: var(--primary);
-      background: none;
-      border: none;
-      white-space: normal;
     }
     .citation {
       font-size: 0.85rem;
@@ -596,17 +531,6 @@ export class ChatComponent extends LitElement {
       &:hover {
         background: color-mix(in srgb, var(--card-bg), var(--primary) 5%);
       }
-    }
-    .debug-buttons {
-      display: flex;
-      justify-content: right;
-      gap: var(--space-md);
-      margin-bottom: var(--space-md);
-    }
-    .debug-details {
-      position: fixed;
-      inset: 0;
-      background: var(--overlay-color);
     }
     .button,
     .submit-button {

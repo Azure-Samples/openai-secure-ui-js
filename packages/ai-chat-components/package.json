@@ -23,7 +23,7 @@
     "lint": "lit-analyzer",
     "clean": "npx rimraf dist",
     "release:check": "semantic-release --dry-run",
-    "postinstall": "npm run build"
+    "_postinstall": "npm run build"
   },
   "author": "Microsoft",
   "repository": {
@@ -51,11 +51,12 @@
     "branches": "main"
   },
   "dependencies": {
+    "@microsoft/ai-chat-protocol": "^1.0.0-beta.20240814.1",
     "lit": "^3.0.0"
   },
   "devDependencies": {
     "lit-analyzer": "^2.0.1",
-    "semantic-release": "^22.0.12",
+    "semantic-release": "^24.1.0",
     "semantic-release-npm-github": "^5.0.0",
     "typescript": "^5.2.2",
     "vite": "^5.0.8"
