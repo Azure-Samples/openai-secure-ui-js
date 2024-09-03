@@ -2,9 +2,10 @@ import process from 'node:process';
 import { Readable } from 'node:stream';
 import { DefaultAzureCredential, getBearerTokenProvider } from '@azure/identity';
 import { HttpRequest, InvocationContext, HttpResponseInit, app } from '@azure/functions';
+import { Document } from '@langchain/core/documents';
 import { AIChatCompletionRequest, AIChatCompletionDelta, AIChatCompletion } from '@microsoft/ai-chat-protocol';
 import { AzureChatOpenAI } from '@langchain/openai';
-import { ChatPromptTemplate, PromptTemplate } from '@langchain/core/prompts';
+import { ChatPromptTemplate } from '@langchain/core/prompts';
 import 'dotenv/config';
 
 const azureOpenAiScope = 'https://cognitiveservices.azure.com/.default';
@@ -34,7 +35,7 @@ export async function postChat(stream: boolean, request: HttpRequest, context: I
       };
     }
 
-    let azureADTokenProvider = () => '__fake_token__';
+    let azureADTokenProvider: () => Promise<string> = async () => '__fake_token__';
 
     if (!azureOpenAiEndpoint.startsWith('http://localhost')) {
       // Use the current user identity to authenticate.
@@ -58,7 +59,7 @@ export async function postChat(stream: boolean, request: HttpRequest, context: I
 
     if (stream) {
       const responseStream = await prompt.pipe(model).stream({ input: lastUserMessage });
-      const jsonStream = Readable.from(createJsonStream(responseStream));
+      const jsonStream = Readable.from(createJsonStream(responseStream as any));
 
       return {
         headers: {
@@ -69,13 +70,13 @@ export async function postChat(stream: boolean, request: HttpRequest, context: I
       };
     } else {
       const response = await prompt.pipe(model).invoke({ input: lastUserMessage });
-
+      context.log(`Response from OpenAI: ${response.content}`);
       return {
         jsonBody: {
-          messages: [{
-            content: response.answer,
+          message: {
+            content: response.content,
             role: 'assistant',
-          }],
+          },
         } as AIChatCompletion,
       };
     }
@@ -109,5 +110,15 @@ async function* createJsonStream(chunks: AsyncIterable<{ context: Document[]; an
 }
 
 app.setup({ enableHttpStream: true });
-app.post('chat/stream', postChat.bind(null, true));
-app.post('chat', postChat.bind(null, false));
+app.http('chat-stream-post', {
+  route: 'chat/stream',
+  methods: ['POST'],
+  authLevel: 'anonymous',
+  handler: postChat.bind(null, true),
+});
+app.http('chat-post', {
+  route: 'chat',
+  methods: ['POST'],
+  authLevel: 'anonymous',
+  handler: postChat.bind(null, false),
+});
