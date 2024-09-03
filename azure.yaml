@@ -1,0 +1,34 @@
+# yaml-language-server: $schema=https://raw.githubusercontent.com/Azure/azure-dev/main/schemas/v1.0/azure.yaml.json
+
+name: openai-secure-ui-js
+metadata:
+  template: openai-secure-ui-js
+
+services:
+  webapp:
+    project: ./packages/webapp-html
+    dist: dist
+    language: ts
+    host: staticwebapp
+    hooks:
+      predeploy:
+        windows:
+          shell: pwsh
+          run: npm run build
+        posix:
+          shell: sh
+          run: npm run build
+
+  api:
+    project: ./packages/api
+    language: ts
+    host: function
+
+hooks:
+  postprovision:
+    windows:
+      shell: pwsh
+      run: azd env get-values > packages/api/.env
+    posix:
+      shell: sh
+      run: azd env get-values > packages/api/.env

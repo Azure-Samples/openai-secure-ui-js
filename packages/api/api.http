@@ -1,0 +1,32 @@
+##################################################################
+# VS Code with REST Client extension is needed to use this file.
+# Download at: https://aka.ms/vscode/rest-client
+##################################################################
+
+@api_host = http://localhost:7071
+
+### Chat with the bot
+POST {{api_host}}/api/chat
+Content-Type: application/json
+
+{
+  "messages": [
+    {
+      "content": "How to bake cookies?",
+      "role": "user"
+    }
+  ],
+}
+
+### Chat with the bot with streaming
+POST {{api_host}}/api/chat/stream
+Content-Type: application/json
+
+{
+  "messages": [
+    {
+      "content": "How to bake cookies?",
+      "role": "user"
+    }
+  ],
+}

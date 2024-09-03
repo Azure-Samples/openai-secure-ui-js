@@ -1,0 +1,29 @@
+:root {
+  --azc-primary: #da0;
+  --azc-bg: #eee;
+  --azc-border-radius: 16px;
+}
+html,
+body {
+  font-size: 16px;
+  margin: 0;
+  background: var(--azc-bg);
+}
+nav {
+  background: #333;
+  color: #fff;
+  padding: 16px;
+  font-family:
+    'Segoe UI',
+    -apple-system,
+    BlinkMacSystemFont,
+    Roboto,
+    'Helvetica Neue',
+    sans-serif;
+  font-size: 1.25rem;
+}
+azc-chat {
+  display: block;
+  max-width: 1024px;
+  margin: 0 auto;
+}

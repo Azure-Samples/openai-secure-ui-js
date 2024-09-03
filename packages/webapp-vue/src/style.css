@@ -1,0 +1,12 @@
+:root {
+  --azc-primary: #0b6;
+  --azc-bg: #eee;
+  --azc-border-radius: 16px;
+}
+
+html,
+body {
+  font-size: 16px;
+  margin: 0;
+  background: var(--azc-bg);
+}

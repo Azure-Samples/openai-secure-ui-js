@@ -1,0 +1,80 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <meta name="description" content="AI Chat" />
+    <link rel="icon" type="image/png" href="/favicon.png" />
+    <title>AI Chat</title>
+    <style>
+      :root {
+        --azc-primary: #06b;
+        --azc-bg: #eee;
+        --azc-border-radius: 16px;
+      }
+      html,
+      body {
+        font-size: 16px;
+        margin: 0;
+        background: var(--azc-bg);
+      }
+      nav {
+        background: #333;
+        color: #fff;
+        padding: 16px;
+        font-family:
+          'Segoe UI',
+          -apple-system,
+          BlinkMacSystemFont,
+          Roboto,
+          'Helvetica Neue',
+          sans-serif;
+        font-size: 1.25rem;
+      }
+      .container {
+        max-width: 1024px;
+        margin: 0 auto;
+        display: flex;
+        align-items: center;
+      }
+      .logo {
+        margin-right: 8px;
+      }
+      input {
+        border: 0;
+        border-radius: 8px;
+        padding: 8px;
+        margin-left: 48px;
+        flex: auto;
+      }
+      azc-chat {
+        flex: auto;
+      }
+    </style>
+    <script>
+      function updateApiUrl(e) {
+        const url = e.target.value;
+        const chat = document.querySelector('azc-chat');
+        chat.options.apiUrl = url;
+      }
+      window.onload = () => {
+        const input = document.querySelector('input');
+        input.addEventListener('change', updateApiUrl);
+        updateApiUrl({ target: input });
+      };
+    </script>
+  </head>
+  <body>
+    <nav>
+      <div class="container">
+        <img class="logo" src="./logo.svg" alt="AI Chat logo" width="36" height="36" />
+        AI Chat
+        <input type="text" placeholder="Chat API URL" value="http://localhost:3000" title="Chat API URL" />
+      </div>
+    </nav>
+    <div class="container">
+      <azc-chat></azc-chat>
+    </div>
+    <script type="module" src="/src/index.ts"></script>
+  </body>
+</html>

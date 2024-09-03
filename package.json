@@ -1,0 +1,60 @@
+{
+  "name": "openai-secure-ui-js",
+  "version": "1.0.0",
+  "description": "Reusable secure UI building blocks for Azure AI Chat with OpenAI",
+  "private": true,
+  "scripts": {
+    "start": "npm run build:wc && concurrently \"npm:start:*\" --kill-others",
+    "start:webapp": "npm run dev --workspace=webapp-html",
+    "start:api": "npm run start --workspace=api",
+    "dev:local": "npm run build:wc && concurrently \"npx ollamazure\" \"npm:start:*\" --kill-others",
+    "build": "npm run build -ws --if-present",
+    "build:wc": "npm run build --workspace=@azure/ai-chat-components",
+    "clean": "npm run clean -ws --if-present",
+    "format": "prettier --list-different --write .",
+    "format:check": "prettier --list-different ."
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/Azure-Samples/openai-secure-js.git"
+  },
+  "homepage": "https://github.com/Azure-Samples/openai-secure-js",
+  "bugs": {
+    "url": "https://github.com/Azure-Samples/openai-secure-js/issues"
+  },
+  "keywords": [
+    "azure",
+    "azure-functions",
+    "azure-static-web-apps",
+    "langchainjs",
+    "chatbot",
+    "serverless",
+    "typescript",
+    "secure",
+    "web-components",
+    "openai",
+    "ui"
+  ],
+  "author": "Microsoft",
+  "license": "MIT",
+  "workspaces": [
+    "packages/*"
+  ],
+  "devDependencies": {
+    "concurrently": "^8.2.2",
+    "prettier": "^3.0.3",
+    "rimraf": "^5.0.5",
+    "typescript": "^5.3.3"
+  },
+  "engines": {
+    "node": ">=20",
+    "npm": ">=10"
+  },
+  "prettier": {
+    "tabWidth": 2,
+    "semi": true,
+    "singleQuote": true,
+    "printWidth": 120,
+    "bracketSpacing": true
+  }
+}

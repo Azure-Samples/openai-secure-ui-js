@@ -1,0 +1,13 @@
+/* You can add global styles to this file, and also import other style files */
+:root {
+  --azc-primary: #b22;
+  --azc-bg: #eee;
+  --azc-border-radius: 16px;
+}
+
+html,
+body {
+  font-size: 16px;
+  margin: 0;
+  background: var(--azc-bg);
+}
