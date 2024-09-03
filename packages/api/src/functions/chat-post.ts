@@ -2,7 +2,6 @@ import process from 'node:process';
 import { Readable } from 'node:stream';
 import { DefaultAzureCredential, getBearerTokenProvider } from '@azure/identity';
 import { HttpRequest, InvocationContext, HttpResponseInit, app } from '@azure/functions';
-import { Document } from '@langchain/core/documents';
 import { AIChatCompletionRequest, AIChatCompletionDelta, AIChatCompletion } from '@microsoft/ai-chat-protocol';
 import { AzureChatOpenAI } from '@langchain/openai';
 import { ChatPromptTemplate } from '@langchain/core/prompts';
@@ -70,7 +69,7 @@ export async function postChat(stream: boolean, request: HttpRequest, context: I
       };
     } else {
       const response = await prompt.pipe(model).invoke({ input: lastUserMessage });
-      context.log(`Response from OpenAI: ${response.content}`);
+
       return {
         jsonBody: {
           message: {
@@ -92,13 +91,13 @@ export async function postChat(stream: boolean, request: HttpRequest, context: I
 }
 
 // Transform the response chunks into a JSON stream
-async function* createJsonStream(chunks: AsyncIterable<{ context: Document[]; answer: string }>) {
+async function* createJsonStream(chunks: AsyncIterable<{ content: string }>) {
   for await (const chunk of chunks) {
-    if (!chunk.answer) continue;
+    if (!chunk.content) continue;
 
     const responseChunk: AIChatCompletionDelta = {
       delta: {
-        content: chunk.answer,
+        content: chunk.content,
         role: 'assistant',
       },
     };

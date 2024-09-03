@@ -15,7 +15,7 @@ Content-Type: application/json
       "content": "How to bake cookies?",
       "role": "user"
     }
-  ],
+  ]
 }
 
 ### Chat with the bot with streaming
@@ -28,5 +28,5 @@ Content-Type: application/json
       "content": "How to bake cookies?",
       "role": "user"
     }
-  ],
+  ]
 }
