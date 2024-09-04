@@ -40,6 +40,9 @@
       .logo {
         margin-right: 8px;
       }
+      .spacer {
+        flex: 1 1 0;
+      }
       input {
         border: 0;
         border-radius: 8px;
@@ -47,7 +50,7 @@
         margin-left: 48px;
         flex: auto;
       }
-      azc-chat {
+      azc-chat, azc-auth {
         flex: auto;
       }
     </style>
@@ -67,13 +70,21 @@
   <body>
     <nav>
       <div class="container">
-        <img class="logo" src="./logo.svg" alt="AI Chat logo" width="36" height="36" />
+        <img class="logo" src="./favicon.png" alt="AI Chat logo" width="36" height="36" />
         AI Chat
         <input type="text" placeholder="Chat API URL" value="http://localhost:3000" title="Chat API URL" />
+        <div class="spacer"></div>
+        <azc-auth type="status">
+          <span slot="logout">
+            <azc-auth type="logout"></azc-auth>
+          </span>
+        </azc-auth>
       </div>
     </nav>
     <div class="container">
-      <azc-chat></azc-chat>
+      <azc-auth>
+        <azc-chat></azc-chat>
+      </azc-auth>
     </div>
     <script type="module" src="/src/index.ts"></script>
   </body>
