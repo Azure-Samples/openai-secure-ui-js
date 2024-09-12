@@ -264,10 +264,10 @@ output AZURE_LOCATION string = location
 output AZURE_TENANT_ID string = tenant().tenantId
 output AZURE_RESOURCE_GROUP string = resourceGroup.name
 
-output AZURE_OPENAI_API_ENDPOINT string = finalOpenAiUrl
-output AZURE_OPENAI_API_INSTANCE_NAME string = openAi.outputs.name
-output AZURE_OPENAI_API_VERSION string = openAiApiVersion
+output AZURE_OPENAI_ENDPOINT string = finalOpenAiUrl
+output AZURE_OPENAI_API_INSTANCE_ string = openAi.outputs.name
 output AZURE_OPENAI_API_DEPLOYMENT_NAME string = chatDeploymentName
+output OPENAI_API_VERSION string = openAiApiVersion
 
 output API_URL string = useVnet ? '' : api.outputs.uri
 output WEBAPP_URL string = webapp.outputs.uri

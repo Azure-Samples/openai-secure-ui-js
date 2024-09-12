@@ -3,9 +3,9 @@ import { Readable } from 'node:stream';
 import { DefaultAzureCredential, getBearerTokenProvider } from '@azure/identity';
 import { HttpRequest, InvocationContext, HttpResponseInit, app } from '@azure/functions';
 import { AIChatCompletionRequest, AIChatCompletionDelta, AIChatCompletion } from '@microsoft/ai-chat-protocol';
-import { AzureChatOpenAI } from '@langchain/openai';
-import { ChatPromptTemplate } from '@langchain/core/prompts';
+import { AzureOpenAI, OpenAI } from "openai";
 import 'dotenv/config';
+import { ChatCompletionChunk } from 'openai/resources';
 
 const azureOpenAiScope = 'https://cognitiveservices.azure.com/.default';
 const systemPrompt = `Assistant helps the user with cooking questions. Be brief in your answers. Answer only plain text, DO NOT use Markdown.
@@ -34,31 +34,39 @@ export async function postChat(stream: boolean, request: HttpRequest, context: I
       };
     }
 
-    let azureADTokenProvider: () => Promise<string> = async () => '__fake_token__';
+    let model: string;
+    let openai: OpenAI;
 
-    if (!azureOpenAiEndpoint.startsWith('http://localhost')) {
+    if (process.env.OPENAI_API_KEY) {
+      context.log('Using OpenAI API');
+      model = "gpt-4o";
+      openai = new OpenAI();
+    } else if (process.env.AZURE_OPENAI_API_DEPLOYMENT_NAME) {
+      context.log('Using Azure OpenAI');
+      model = process.env.AZURE_OPENAI_API_DEPLOYMENT_NAME;
+
       // Use the current user identity to authenticate.
       // No secrets needed, it uses `az login` or `azd auth login` locally,
       // and managed identity when deployed on Azure.
       const credentials = new DefaultAzureCredential();
-      azureADTokenProvider = getBearerTokenProvider(credentials, azureOpenAiScope);
+      const azureADTokenProvider = getBearerTokenProvider(credentials, azureOpenAiScope);
+      openai = new AzureOpenAI({ azureADTokenProvider });
+    } else {
+      throw new Error('No OpenAI API key or Azure OpenAI deployment provided');
     }
 
-    const model = new AzureChatOpenAI({
-      // Controls randomness. 0 = deterministic, 1 = maximum randomness
-      temperature: 0.7,
-      azureADTokenProvider,
-    });
-
-    const lastUserMessage = messages.at(-1)!.content;
-    const prompt = ChatPromptTemplate.fromMessages([
-      ['system', systemPrompt],
-      ['human', '{input}'],
-    ]);
-
     if (stream) {
-      const responseStream = await prompt.pipe(model).stream({ input: lastUserMessage });
-      const jsonStream = Readable.from(createJsonStream(responseStream as any));
+      console.log('streaming');
+      const responseStream = await openai.chat.completions.create({
+        messages: [
+          { role: 'system', content: systemPrompt},
+          ...messages,
+        ],
+        temperature: 0.7,
+        model,
+        stream: true
+      });
+      const jsonStream = Readable.from(createJsonStream(responseStream));
 
       return {
         headers: {
@@ -68,12 +76,19 @@ export async function postChat(stream: boolean, request: HttpRequest, context: I
         body: jsonStream,
       };
     } else {
-      const response = await prompt.pipe(model).invoke({ input: lastUserMessage });
+      const response = await openai.chat.completions.create({
+        messages: [
+          { role: 'system', content: systemPrompt},
+          ...messages,
+        ],
+        temperature: 0.7,
+        model,
+      });
 
       return {
         jsonBody: {
           message: {
-            content: response.content,
+            content: response.choices[0].message.content,
             role: 'assistant',
           },
         } as AIChatCompletion,
@@ -91,13 +106,14 @@ export async function postChat(stream: boolean, request: HttpRequest, context: I
 }
 
 // Transform the response chunks into a JSON stream
-async function* createJsonStream(chunks: AsyncIterable<{ content: string }>) {
+async function* createJsonStream(chunks: AsyncIterable<ChatCompletionChunk>) {
   for await (const chunk of chunks) {
-    if (!chunk.content) continue;
+    console.log(chunk);
+    if (!chunk.choices[0]?.delta.content) continue;
 
     const responseChunk: AIChatCompletionDelta = {
       delta: {
-        content: chunk.content,
+        content: chunk.choices[0].delta.content,
         role: 'assistant',
       },
     };
