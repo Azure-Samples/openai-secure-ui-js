@@ -36,9 +36,9 @@ export type ChatComponentOptions = ChatRequestOptions & {
   };
 };
 
-export const defaultOptions: ChatComponentOptions = {
+export const chatDefaultOptions: ChatComponentOptions = {
   enableContentLinks: false,
-  stream: false,
+  stream: true,
   chunkIntervalMs: 30,
   apiUrl: '',
   enablePromptSuggestions: true,
@@ -73,17 +73,17 @@ export const defaultOptions: ChatComponentOptions = {
 export class ChatComponent extends LitElement {
   @property({
     type: Object,
-    converter: (value) => ({ ...defaultOptions, ...JSON.parse(value || '{}') }),
+    converter: (value) => ({ ...chatDefaultOptions, ...JSON.parse(value || '{}') }),
   })
-  options: ChatComponentOptions = defaultOptions;
+  options: ChatComponentOptions = chatDefaultOptions;
 
   @property() question = '';
   @property({ type: Array }) messages: AIChatMessage[] = [];
   @state() protected hasError = false;
   @state() protected isLoading = false;
   @state() protected isStreaming = false;
-  @query('.messages') protected messagesElement;
-  @query('.chat-input') protected chatInputElement;
+  @query('.messages') protected messagesElement!: HTMLElement;
+  @query('.chat-input') protected chatInputElement!: HTMLElement;
 
   onSuggestionClicked(suggestion: string) {
     this.question = suggestion;
@@ -105,7 +105,9 @@ export class ChatComponent extends LitElement {
   }
 
   async onSendClicked(isRetry = false) {
-    if (this.isLoading) return;
+    if (this.isLoading) {
+      return;
+    }
 
     this.hasError = false;
     if (!isRetry) {
