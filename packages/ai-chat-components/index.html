@@ -41,38 +41,18 @@
         margin-right: 8px;
       }
       .spacer {
-        flex: 1 1 0;
-      }
-      input {
-        border: 0;
-        border-radius: 8px;
-        padding: 8px;
-        margin-left: 48px;
-        flex: auto;
+        flex: 100 1 0;
       }
       azc-chat, azc-auth {
         flex: auto;
       }
     </style>
-    <script>
-      function updateApiUrl(e) {
-        const url = e.target.value;
-        const chat = document.querySelector('azc-chat');
-        chat.options.apiUrl = url;
-      }
-      window.onload = () => {
-        const input = document.querySelector('input');
-        input.addEventListener('change', updateApiUrl);
-        updateApiUrl({ target: input });
-      };
-    </script>
   </head>
   <body>
     <nav>
       <div class="container">
         <img class="logo" src="./favicon.png" alt="AI Chat logo" width="36" height="36" />
         AI Chat
-        <input type="text" placeholder="Chat API URL" value="" title="Chat API URL" />
         <div class="spacer"></div>
         <azc-auth type="status">
           <span slot="logout">
