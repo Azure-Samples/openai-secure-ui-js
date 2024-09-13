@@ -24,8 +24,10 @@ param storageAccountName string = ''
 })
 param openAiLocation string // Set in main.parameters.json
 param openAiSkuName string = 'S0'
-param openAiUrl string = ''
 param openAiApiVersion string // Set in main.parameters.json
+
+@secure()
+param openAiApiKey string = ''
 
 // Location is not relevant here as it's only for the built-in api
 // which is not used here. Static Web App is a global service otherwise
@@ -55,8 +57,9 @@ param isContinuousDeployment bool // Set in main.parameters.json
 var abbrs = loadJsonContent('abbreviations.json')
 var resourceToken = toLower(uniqueString(subscription().id, environmentName, location))
 var tags = { 'azd-env-name': environmentName }
-var finalOpenAiUrl = empty(openAiUrl) ? 'https://${openAi.outputs.name}.openai.azure.com' : openAiUrl
+var openAiUrl = 'https://${openAi.outputs.name}.openai.azure.com'
 var apiResourceName = '${abbrs.webSitesFunctions}api-${resourceToken}'
+var useAzureOpenAi = empty(openAiApiKey)
 
 // Organize resources in a resource group
 resource resourceGroup 'Microsoft.Resources/resourceGroups@2021-04-01' = {
@@ -99,13 +102,15 @@ module api './app/api.bicep' = {
     staticWebAppName: webapp.outputs.name
     appSettings: {
       APPINSIGHTS_INSTRUMENTATIONKEY: monitoring.outputs.applicationInsightsInstrumentationKey
-      AZURE_OPENAI_API_INSTANCE_NAME: openAi.outputs.name
-      AZURE_OPENAI_API_ENDPOINT: finalOpenAiUrl
-      AZURE_OPENAI_API_VERSION: openAiApiVersion
-      AZURE_OPENAI_API_DEPLOYMENT_NAME: chatDeploymentName
+      AZURE_OPENAI_API_INSTANCE_NAME: useAzureOpenAi ? openAi.outputs.name : ''
+      AZURE_OPENAI_API_ENDPOINT: useAzureOpenAi ? openAiUrl : ''
+      AZURE_OPENAI_API_VERSION: useAzureOpenAi ? openAiApiVersion : ''
+      AZURE_OPENAI_API_DEPLOYMENT_NAME: useAzureOpenAi ? chatDeploymentName : ''
+      OPENAI_API_KEY: useAzureOpenAi ? '' : openAiApiKey
+      OPENAI_MODEL_NAME: useAzureOpenAi ? '' : chatModelName
      }
   }
-  dependsOn: empty(openAiUrl) ? [] : [openAi]
+  dependsOn: useAzureOpenAi ? [openAi] : []
 }
 
 // Compute plan for the Azure Functions API
@@ -183,7 +188,7 @@ module monitoring './core/monitor/monitoring.bicep' = {
   }
 }
 
-module openAi 'core/ai/cognitiveservices.bicep' = if (empty(openAiUrl)) {
+module openAi 'core/ai/cognitiveservices.bicep' = if (useAzureOpenAi) {
   name: 'openai'
   scope: resourceGroup
   params: {
@@ -264,10 +269,11 @@ output AZURE_LOCATION string = location
 output AZURE_TENANT_ID string = tenant().tenantId
 output AZURE_RESOURCE_GROUP string = resourceGroup.name
 
-output AZURE_OPENAI_ENDPOINT string = finalOpenAiUrl
-output AZURE_OPENAI_API_INSTANCE_ string = openAi.outputs.name
-output AZURE_OPENAI_API_DEPLOYMENT_NAME string = chatDeploymentName
-output OPENAI_API_VERSION string = openAiApiVersion
+output AZURE_OPENAI_ENDPOINT string = useAzureOpenAi ? openAiUrl : ''
+output AZURE_OPENAI_API_INSTANCE_ string = useAzureOpenAi ? openAi.outputs.name : ''
+output AZURE_OPENAI_API_DEPLOYMENT_NAME string = useAzureOpenAi ? chatDeploymentName : ''
+output OPENAI_API_VERSION string = useAzureOpenAi ? openAiApiVersion : ''
+output OPENAI_MODEL_NAME string = useAzureOpenAi ? '' : chatModelName
 
 output API_URL string = useVnet ? '' : api.outputs.uri
 output WEBAPP_URL string = webapp.outputs.uri

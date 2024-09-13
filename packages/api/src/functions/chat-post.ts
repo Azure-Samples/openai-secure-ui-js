@@ -39,7 +39,7 @@ export async function postChat(stream: boolean, request: HttpRequest, context: I
 
     if (process.env.OPENAI_API_KEY) {
       context.log('Using OpenAI API');
-      model = "gpt-4o";
+      model = process.env.OPENAI_MODEL_NAME || 'gpt-4o';
       openai = new OpenAI();
     } else if (process.env.AZURE_OPENAI_API_DEPLOYMENT_NAME) {
       context.log('Using Azure OpenAI');
