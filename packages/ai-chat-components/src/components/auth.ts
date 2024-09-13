@@ -16,14 +16,14 @@ export type AuthDetails = {
   userId: string;
   userDetails: string;
   userRoles: string[];
-  claims: { typ: string, val: string }[];
+  claims: { typ: string; val: string }[];
 };
 
 export type AuthOptions = {
   strings: {
     loginButton: string;
     logoutButton: string;
-  }
+  };
   providers: AuthProvider[];
 };
 
@@ -35,32 +35,61 @@ export type AuthProvider = {
   textColor: string;
 };
 
-export const defaultOptions: AuthOptions = {
+export const authDefaultOptions: AuthOptions = {
   strings: {
     loginButton: 'Log in',
-    logoutButton: 'Log out'
+    logoutButton: 'Log out',
   },
   providers: [
-    { id: 'aad', label: 'Sign in with Microsoft', icon: microsoftSvg, color: '#00A4EF', textColor: '#fff' },
-    { id: 'github', label: 'Sign in with GitHub', icon: githubSvg, color: '#181717', textColor: '#fff' },
-    { id: 'google', label: 'Sign in with Google', icon: 'https://cdn.simpleicons.org/google/white', color: '#4285f4', textColor: '#fff' },
-    { id: 'facebook', label: 'Sign in with Facebook', icon: 'https://cdn.simpleicons.org/facebook/white', color: '#0866ff', textColor: '#fff' },
-    { id: 'apple', label: 'Sign in with Apple', icon: 'https://cdn.simpleicons.org/apple/white', color: '#000', textColor: '#fff' },
-    { id: 'twitter', label: 'Sign in with X', icon: 'https://cdn.simpleicons.org/x/white', color: '#000', textColor: '#fff' },
-    { id: 'oidc', label: 'Sign in with OpenID Connect', icon: 'https://cdn.simpleicons.org/openid/white', color: '#333', textColor: '#fff' },
-  ]
-}
+    { id: 'aad', label: 'Log in with Microsoft', icon: microsoftSvg, color: '#00A4EF', textColor: '#fff' },
+    { id: 'github', label: 'Log in with GitHub', icon: githubSvg, color: '#181717', textColor: '#fff' },
+    {
+      id: 'google',
+      label: 'Log in with Google',
+      icon: 'https://cdn.simpleicons.org/google/white',
+      color: '#4285f4',
+      textColor: '#fff',
+    },
+    {
+      id: 'facebook',
+      label: 'Log in with Facebook',
+      icon: 'https://cdn.simpleicons.org/facebook/white',
+      color: '#0866ff',
+      textColor: '#fff',
+    },
+    {
+      id: 'apple',
+      label: 'Log in with Apple',
+      icon: 'https://cdn.simpleicons.org/apple/white',
+      color: '#000',
+      textColor: '#fff',
+    },
+    {
+      id: 'twitter',
+      label: 'Log in with X',
+      icon: 'https://cdn.simpleicons.org/x/white',
+      color: '#000',
+      textColor: '#fff',
+    },
+    {
+      id: 'oidc',
+      label: 'Log in with OpenID Connect',
+      icon: 'https://cdn.simpleicons.org/openid/white',
+      color: '#333',
+      textColor: '#fff',
+    },
+  ],
+};
 
 export type AuthButtonType = 'status' | 'login' | 'logout';
 
 @customElement('azc-auth')
 export class AuthComponent extends LitElement {
-
   @property({
     type: Object,
-    converter: (value) => ({ ...defaultOptions, ...JSON.parse(value || '{}') }),
+    converter: (value) => ({ ...authDefaultOptions, ...JSON.parse(value || '{}') }),
   })
-  options: AuthOptions = defaultOptions;
+  options: AuthOptions = authDefaultOptions;
   // @property({ type: Array }) providers: string[] = ['aad', 'github'];
   @property() type: AuthButtonType = 'login';
   @property() loginRedirect = '/';
@@ -74,7 +103,7 @@ export class AuthComponent extends LitElement {
 
   constructor() {
     super();
-    this.getUserInfo().then(userDetails => {
+    this.getUserInfo().then((userDetails) => {
       this._userDetails = userDetails;
       this.loaded = true;
     });
@@ -96,28 +125,44 @@ export class AuthComponent extends LitElement {
     return payload?.clientPrincipal;
   }
 
-  protected renderStatus = () => html`<section class="auth-status">
-    <span class="login-icon">${unsafeSVG(personSvg)}</span>
-    ${this._userDetails ? html`<p>Logged in as ${this._userDetails.userDetails}</p>
-      <button @click=${() => this.onLogoutClicked()}>Logout</button>` : nothing}
-  </section>`;
+  protected renderStatus = () =>
+    html`<section class="auth-status">
+      <span class="login-icon">${unsafeSVG(personSvg)}</span>
+      ${this._userDetails
+        ? html`<span>Logged in as ${this._userDetails.userDetails}</span>
+            <button @click=${() => this.onLogoutClicked()}>Logout</button>`
+        : nothing}
+    </section>`;
 
-  protected renderLogin = () => 
-    this.userDetails ? html`<slot></slot>` :
-  html`<section class="auth-login">
-    ${this.options.providers.map(provider => {
-      const providerStyle = {
-        backgroundColor: provider.color,
-        color: provider.textColor
-      };
-      return html`<button class="login" @click=${() => this.onLoginClicked(provider.id) } style=${styleMap(providerStyle)}>
-      <img src="${provider.icon}" alt=""/>
-      <span>${provider.label}</span>
-    </button>` }
-    )}
-  </section>`;
+  protected renderLogin = () =>
+    !this.loaded
+      ? html`<slot name="loader"></slot>`
+      : this.userDetails
+        ? html`<slot></slot>`
+        : this.renderLoginOptions();
 
-  protected renderLogout = () => html`<button class="logout" @click=${() => this.onLogoutClicked()} title="log out">${unsafeSVG(logoutSvg)}</button>`;
+  protected renderLoginOptions = () =>
+    html`<section class="auth-login">
+      ${this.options.providers.map((provider) => {
+        const providerStyle = {
+          backgroundColor: provider.color,
+          color: provider.textColor,
+        };
+        return html`<button
+          class="login"
+          @click=${() => this.onLoginClicked(provider.id)}
+          style=${styleMap(providerStyle)}
+        >
+          <img src="${provider.icon}" alt="" />
+          <span>${provider.label}</span>
+        </button>`;
+      })}
+    </section>`;
+
+  protected renderLogout = () =>
+    html`<button class="logout" @click=${() => this.onLogoutClicked()} title="log out">
+      ${unsafeSVG(logoutSvg)}
+    </button>`;
 
   protected override render() {
     switch (this.type) {
@@ -197,7 +242,7 @@ export class AuthComponent extends LitElement {
       width: 100%;
       justify-content: left;
       gap: var(--space-md);
-      
+
       img {
         width: 24px;
         height: 24px;
