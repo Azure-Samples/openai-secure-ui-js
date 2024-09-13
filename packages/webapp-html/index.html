@@ -2,13 +2,24 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
-    <link rel="icon" type="image/svg+xml" href="/vite.svg" />
+    <link rel="icon" type="image/png" href="/favicon.png" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>AI Chat</title>
   </head>
   <body>
-    <nav>AI Chat</nav>
-    <azc-chat></azc-chat>
+    <nav>
+      <div class="container">
+        <img class="logo" src="./favicon.png" alt="AI Chat logo" width="36" height="36" />
+        AI Chat
+        <div class="spacer"></div>
+        <azc-auth type="status"></azc-auth>
+      </div>
+    </nav>
+    <div class="container">
+      <azc-auth>
+        <azc-chat></azc-chat>
+      </azc-auth>
+    </div>
     <script type="module" src="/main.js"></script>
   </body>
 </html>

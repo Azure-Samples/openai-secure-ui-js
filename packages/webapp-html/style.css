@@ -22,8 +22,21 @@ nav {
     sans-serif;
   font-size: 1.25rem;
 }
-azc-chat {
-  display: block;
+.container {
   max-width: 1024px;
   margin: 0 auto;
+  display: flex;
+  align-items: center;
+}
+.logo {
+  margin-right: 8px;
+}
+.spacer {
+  flex: 100 1 0;
+}
+azc-chat, azc-auth {
+  flex: auto;
+}
+azc-auth[type="status"] {
+  font-size: 16px;
 }
