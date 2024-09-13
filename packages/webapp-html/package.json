@@ -4,7 +4,10 @@
   "version": "0.0.0",
   "type": "module",
   "scripts": {
-    "dev": "vite",
+    "start": "swa start",
+    "dev": "concurrently \"npm:dev:*\" --kill-others",
+    "dev:vite": "vite --port 8000 --host",
+    "dev:api": "cd ../api && npm run start",
     "build": "vite build",
     "preview": "vite preview"
   },

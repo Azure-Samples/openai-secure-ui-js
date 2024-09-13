@@ -58,7 +58,6 @@
     "lit": "^3.0.0"
   },
   "devDependencies": {
-    "@azure/static-web-apps-cli": "^2.0.1",
     "lit-analyzer": "^2.0.1",
     "semantic-release": "^24.1.0",
     "semantic-release-npm-github": "^5.0.0",
