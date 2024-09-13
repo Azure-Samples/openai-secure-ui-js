@@ -52,7 +52,7 @@ module api '../core/host/functions.bicep' = if (!useVnet) {
 }
 
 // Link the Function App to the Static Web App
-module linkedBackend './linked-backend.bicep' = if (useVnet) {
+module linkedBackend './linked-backend.bicep' = {
   name: 'linkedbackend'
   scope: resourceGroup()
   params: {

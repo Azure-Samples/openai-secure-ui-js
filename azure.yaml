@@ -10,14 +10,6 @@ services:
     dist: dist
     language: ts
     host: staticwebapp
-    hooks:
-      predeploy:
-        windows:
-          shell: pwsh
-          run: npm run build -ws --if-present
-        posix:
-          shell: sh
-          run: npm run build -ws --if-present
 
   api:
     project: ./packages/api
@@ -25,6 +17,13 @@ services:
     host: function
 
 hooks:
+  predeploy:
+    windows:
+      shell: pwsh
+      run: npm run build:wc
+    posix:
+      shell: sh
+      run: npm run build:wc
   postprovision:
     windows:
       shell: pwsh

@@ -275,5 +275,4 @@ output AZURE_OPENAI_API_DEPLOYMENT_NAME string = useAzureOpenAi ? chatDeployment
 output OPENAI_API_VERSION string = useAzureOpenAi ? openAiApiVersion : ''
 output OPENAI_MODEL_NAME string = useAzureOpenAi ? '' : chatModelName
 
-output API_URL string = useVnet ? '' : api.outputs.uri
 output WEBAPP_URL string = webapp.outputs.uri
