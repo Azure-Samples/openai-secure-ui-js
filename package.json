@@ -4,10 +4,9 @@
   "description": "Reusable secure UI building blocks for Azure AI Chat with OpenAI",
   "private": true,
   "scripts": {
-    "start": "npm run build:wc && concurrently \"npm:start:*\" --kill-others",
+    "start": "npm run start --workspace=@azure/ai-chat-components",
     "start:webapp": "npm run dev --workspace=webapp-html",
     "start:api": "npm run start --workspace=api",
-    "dev:local": "npm run build:wc && concurrently \"npx ollamazure\" \"npm:start:*\" --kill-others",
     "build": "npm run build -ws --if-present",
     "build:wc": "npm run build --workspace=@azure/ai-chat-components",
     "clean": "npm run clean -ws --if-present",

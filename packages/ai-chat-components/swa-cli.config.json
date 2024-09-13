@@ -3,11 +3,11 @@
   "configurations": {
     "ai-chat-components": {
       "appLocation": ".",
-      "apiLocation": "../api",
       "outputLocation": "dist",
       "appBuildCommand": "npm run build",
       "run": "npm run dev",
-      "appDevserverUrl": "http://localhost:8000"
+      "appDevserverUrl": "http://localhost:8000",
+      "apiDevserverUrl": "http://localhost:7071"
     }
   }
 }

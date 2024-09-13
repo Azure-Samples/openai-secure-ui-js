@@ -16,7 +16,10 @@
     }
   },
   "scripts": {
-    "dev": "vite --port 8000 --host",
+    "start": "swa start",
+    "dev": "concurrently \"npm:dev:*\" --kill-others",
+    "dev:vite": "vite --port 8000 --host",
+    "dev:api": "cd ../api && npm run start",
     "build": "vite build && tsc",
     "build:website": "vite build --config vite.website.config.js --base=/chatui/",
     "watch": "vite build --watch --minify false",
