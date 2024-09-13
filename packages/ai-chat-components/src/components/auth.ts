@@ -21,7 +21,6 @@ export type AuthDetails = {
 
 export type AuthOptions = {
   strings: {
-    loginButton: string;
     logoutButton: string;
   };
   providers: AuthProvider[];
@@ -37,13 +36,12 @@ export type AuthProvider = {
 
 export const authDefaultOptions: AuthOptions = {
   strings: {
-    loginButton: 'Log in',
     logoutButton: 'Log out',
   },
   providers: [
     { id: 'aad', label: 'Log in with Microsoft', icon: microsoftSvg, color: '#00A4EF', textColor: '#fff' },
     { id: 'github', label: 'Log in with GitHub', icon: githubSvg, color: '#181717', textColor: '#fff' },
-    {
+    /*{
       id: 'google',
       label: 'Log in with Google',
       icon: 'https://cdn.simpleicons.org/google/white',
@@ -77,7 +75,7 @@ export const authDefaultOptions: AuthOptions = {
       icon: 'https://cdn.simpleicons.org/openid/white',
       color: '#333',
       textColor: '#fff',
-    },
+    },*/
   ],
 };
 
@@ -90,7 +88,6 @@ export class AuthComponent extends LitElement {
     converter: (value) => ({ ...authDefaultOptions, ...JSON.parse(value || '{}') }),
   })
   options: AuthOptions = authDefaultOptions;
-  // @property({ type: Array }) providers: string[] = ['aad', 'github'];
   @property() type: AuthButtonType = 'login';
   @property() loginRedirect = '/';
   @property() logoutRedirect = '/';
@@ -130,7 +127,7 @@ export class AuthComponent extends LitElement {
       <span class="login-icon">${unsafeSVG(personSvg)}</span>
       ${this._userDetails
         ? html`<span>Logged in as ${this._userDetails.userDetails}</span>
-            <button @click=${() => this.onLogoutClicked()}>Logout</button>`
+            <slot name="logout"> ${this.renderLogout()} </slot>`
         : nothing}
     </section>`;
 
@@ -143,20 +140,22 @@ export class AuthComponent extends LitElement {
 
   protected renderLoginOptions = () =>
     html`<section class="auth-login">
-      ${this.options.providers.map((provider) => {
-        const providerStyle = {
-          backgroundColor: provider.color,
-          color: provider.textColor,
-        };
-        return html`<button
-          class="login"
-          @click=${() => this.onLoginClicked(provider.id)}
-          style=${styleMap(providerStyle)}
-        >
-          <img src="${provider.icon}" alt="" />
-          <span>${provider.label}</span>
-        </button>`;
-      })}
+      <div class="login-buttons">
+        ${this.options.providers.map((provider) => {
+          const providerStyle = {
+            '--button-bg': provider.color,
+            '--button-color': provider.textColor,
+          };
+          return html`<button
+            class="login"
+            @click=${() => this.onLoginClicked(provider.id)}
+            style=${styleMap(providerStyle)}
+          >
+            <img src="${provider.icon}" alt="" />
+            <span>${provider.label}</span>
+          </button>`;
+        })}
+      </div>
     </section>`;
 
   protected renderLogout = () =>
@@ -191,6 +190,9 @@ export class AuthComponent extends LitElement {
       --border-radius: var(--azc-border-radius, 16px);
       --focus-outline: var(--azc-focus-outline, 2px solid);
       --overlay-color: var(--azc-overlay-color, rgba(0 0 0 / 40%));
+      --button-border: var(--azc-button-border, none);
+      --logout-button-bg: var(--azc-logout-button-bg, transparent);
+      --logout-button-bg-hover: var(--azc-logout-button-bg-hover, rgba(255 255 255 / 10%));
     }
     *:focus-visible {
       outline: var(--focus-outline) var(--primary);
@@ -203,6 +205,15 @@ export class AuthComponent extends LitElement {
       width: 100%;
     }
     button {
+      --button-bg-hover: var(--azc-button-bg-hover, color-mix(in srgb, var(--button-bg) 85%, white 15%));
+
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: var(--space-xs) var(--space-md);
+      border: var(--button-border);
+      background: var(--button-bg);
+      color: var(--button-color);
       font-size: 1rem;
       border-radius: calc(var(--border-radius) / 2);
       outline: var(--focus-outline) transparent;
@@ -211,15 +222,6 @@ export class AuthComponent extends LitElement {
       &:not(:disabled) {
         cursor: pointer;
       }
-    }
-    button {
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      padding: var(--space-xs) var(--space-md);
-      border: var(--button-border);
-      background: var(--button-bg);
-      color: var(--button-color);
       &:disabled {
         color: var(--disabled-color);
       }
@@ -232,7 +234,16 @@ export class AuthComponent extends LitElement {
       gap: var(--space-md);
       align-items: center;
     }
+    .container {
+      display: flex;
+      align-items: center;
+    }
     .auth-login {
+      display: flex;
+      justify-content: center;
+    }
+    .login-buttons {
+      padding: var(--space-xl);
       display: flex;
       flex-direction: column;
       gap: var(--space-md);
@@ -246,6 +257,12 @@ export class AuthComponent extends LitElement {
       img {
         width: 24px;
         height: 24px;
+      }
+    }
+    .logout {
+      background: var(--logout-button-bg);
+      &:hover:not(:disabled) {
+        background: var(--logout-button-bg-hover);
       }
     }
   `;

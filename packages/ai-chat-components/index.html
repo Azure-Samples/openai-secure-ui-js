@@ -46,6 +46,9 @@
       azc-chat, azc-auth {
         flex: auto;
       }
+      azc-auth[type="status"] {
+        font-size: 16px;
+      }
     </style>
   </head>
   <body>
@@ -54,11 +57,7 @@
         <img class="logo" src="./favicon.png" alt="AI Chat logo" width="36" height="36" />
         AI Chat
         <div class="spacer"></div>
-        <azc-auth type="status">
-          <span slot="logout">
-            <azc-auth type="logout"></azc-auth>
-          </span>
-        </azc-auth>
+        <azc-auth type="status"></azc-auth>
       </div>
     </nav>
     <div class="container">
