@@ -21,7 +21,7 @@
     "dev:vite": "vite --port 8000 --host",
     "dev:api": "cd ../api && npm run start",
     "build": "vite build && tsc",
-    "build:website": "vite build --config vite.website.config.js --base=/chatui/",
+    "build:website": "vite build --config vite.website.config.js --base=/openai-secure-ui-js/",
     "watch": "vite build --watch --minify false",
     "lint": "lit-analyzer",
     "clean": "npx rimraf dist",
