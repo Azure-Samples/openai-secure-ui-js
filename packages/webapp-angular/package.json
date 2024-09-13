@@ -3,7 +3,10 @@
   "version": "0.0.0",
   "scripts": {
     "ng": "ng",
-    "start": "ng serve",
+    "start": "swa start",
+    "dev": "concurrently \"npm:dev:*\" --kill-others",
+    "dev:webapp": "ng serve",
+    "dev:api": "cd ../api && npm run start",
     "build": "ng build",
     "watch": "ng build --watch --configuration development"
   },
