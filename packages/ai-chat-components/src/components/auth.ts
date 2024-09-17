@@ -19,7 +19,7 @@ export type AuthDetails = {
   claims: { typ: string; val: string }[];
 };
 
-export type AuthOptions = {
+export type AuthComponentOptions = {
   strings: {
     logoutButton: string;
   };
@@ -34,7 +34,7 @@ export type AuthProvider = {
   textColor: string;
 };
 
-export const authDefaultOptions: AuthOptions = {
+export const authDefaultOptions: AuthComponentOptions = {
   strings: {
     logoutButton: 'Log out',
   },
@@ -87,7 +87,7 @@ export class AuthComponent extends LitElement {
     type: Object,
     converter: (value) => ({ ...authDefaultOptions, ...JSON.parse(value || '{}') }),
   })
-  options: AuthOptions = authDefaultOptions;
+  options: AuthComponentOptions = authDefaultOptions;
   @property() type: AuthButtonType = 'login';
   @property() loginRedirect = '/';
   @property() logoutRedirect = '/';
