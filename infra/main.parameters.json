@@ -38,6 +38,9 @@
     "webappLocation": {
       "value": "${AZURE_WEBAPP_LOCATION=eastus2}"
     },
+    "apiLocation": {
+      "value": "${AZURE_API_LOCATION=eastus2}"
+    },
     "isContinuousDeployment": {
       "value": "${CI=false}"
     }

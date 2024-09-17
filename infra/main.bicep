@@ -40,6 +40,15 @@ param openAiApiKey string = ''
 })
 param webappLocation string // Set in main.parameters.json
 
+@description('Location for the Azure Functions')
+@allowed(['eastus', 'northeurope', 'southeastasia', 'eastasia', 'eastus2', 'southcentralus', 'australiaeast', 'westus2', 'uksouth', 'eastus2euap', 'westus3', 'swedencentral'])
+@metadata({
+  azd: {
+    type: 'location'
+  }
+})
+param apiLocation string // Set in main.parameters.json
+
 param chatModelName string // Set in main.parameters.json
 param chatDeploymentName string = chatModelName
 param chatModelVersion string // Set in main.parameters.json
@@ -86,7 +95,7 @@ module api './app/api.bicep' = {
   scope: resourceGroup
   params: {
     name: apiResourceName
-    location: location
+    location: apiLocation
     tags: union(tags, { 'azd-service-name': apiServiceName })
     appServicePlanId: appServicePlan.outputs.id
     allowedOrigins: [webapp.outputs.uri]
