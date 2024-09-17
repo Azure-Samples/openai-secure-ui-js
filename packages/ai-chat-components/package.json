@@ -61,7 +61,7 @@
     "lit-analyzer": "^2.0.1",
     "semantic-release": "^24.1.0",
     "semantic-release-npm-github": "^5.0.0",
-    "typescript": "^5.2.2",
+    "typescript": "^5.6.2",
     "vite": "^5.0.8"
   },
   "engines": {
