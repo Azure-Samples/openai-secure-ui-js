@@ -48,9 +48,6 @@ param chatDeploymentCapacity int = 15
 // Id of the user or app to assign application roles
 param principalId string = ''
 
-// Enable enhanced security with VNet integration
-param useVnet bool // Set in main.parameters.json
-
 // Differentiates between automated and manual deployments
 param isContinuousDeployment bool // Set in main.parameters.json
 
@@ -76,12 +73,9 @@ module webapp './core/host/staticwebapp.bicep' = {
     name: !empty(webappName) ? webappName : '${abbrs.webStaticSites}web-${resourceToken}'
     location: webappLocation
     tags: union(tags, { 'azd-service-name': webappName })
-    sku: useVnet ? {
+    sku: {
       name: 'Standard'
       tier: 'Standard'
-    } : {
-      name: 'Free'
-      tier: 'Free'
     }
   }
 }
@@ -98,7 +92,7 @@ module api './app/api.bicep' = {
     allowedOrigins: [webapp.outputs.uri]
     storageAccountName: storage.outputs.name
     applicationInsightsName: monitoring.outputs.applicationInsightsName
-    virtualNetworkSubnetId: useVnet ? vnet.outputs.appSubnetID : ''
+    virtualNetworkSubnetId: vnet.outputs.appSubnetID
     staticWebAppName: webapp.outputs.name
     appSettings: {
       APPINSIGHTS_INSTRUMENTATIONKEY: monitoring.outputs.applicationInsightsInstrumentationKey
@@ -121,14 +115,11 @@ module appServicePlan './core/host/appserviceplan.bicep' = {
     name: !empty(appServicePlanName) ? appServicePlanName : '${abbrs.webServerFarms}${resourceToken}'
     location: location
     tags: tags
-    sku: useVnet ? {
+    sku: {
       name: 'FC1'
       tier: 'FlexConsumption'
-    } : {
-      name: 'Y1'
-      tier: 'Dynamic'
     }
-    reserved: useVnet ? true : null
+    reserved: true
   }
 }
 
@@ -141,14 +132,14 @@ module storage './core/storage/storage-account.bicep' = {
     location: location
     tags: tags
     allowBlobPublicAccess: false
-    allowSharedKeyAccess: !useVnet
-    containers: useVnet ? [
+    allowSharedKeyAccess: false
+    containers: [
       // Deployment storage container
       {
         name: apiResourceName
       }
-    ] : []
-    networkAcls: useVnet ? {
+    ]
+    networkAcls: {
       defaultAction: 'Deny'
       bypass: 'AzureServices'
       virtualNetworkRules: [
@@ -157,15 +148,12 @@ module storage './core/storage/storage-account.bicep' = {
           action: 'Allow'
         }
       ]
-    } : {
-      bypass: 'AzureServices'
-      defaultAction: 'Allow'
     }
   }
 }
 
 // Virtual network for Azure Functions API
-module vnet './app/vnet.bicep' = if (useVnet) {
+module vnet './app/vnet.bicep' = {
   name: 'vnet'
   scope: resourceGroup
   params: {
@@ -273,6 +261,6 @@ output AZURE_OPENAI_ENDPOINT string = useAzureOpenAi ? openAiUrl : ''
 output AZURE_OPENAI_API_INSTANCE_ string = useAzureOpenAi ? openAi.outputs.name : ''
 output AZURE_OPENAI_API_DEPLOYMENT_NAME string = useAzureOpenAi ? chatDeploymentName : ''
 output OPENAI_API_VERSION string = useAzureOpenAi ? openAiApiVersion : ''
-output OPENAI_MODEL_NAME string = useAzureOpenAi ? '' : chatModelName
+output OPENAI_MODEL_NAME string = chatModelName
 
 output WEBAPP_URL string = webapp.outputs.uri
