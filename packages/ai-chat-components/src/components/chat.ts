@@ -42,7 +42,7 @@ export const chatDefaultOptions: ChatComponentOptions = {
   chunkIntervalMs: 30,
   apiUrl: '',
   enablePromptSuggestions: true,
-  promptSuggestions: ['How to make cookies?', 'I want a banana cake recipe', 'I bread gluten-free?'],
+  promptSuggestions: ['How to make cookies?', 'I want a banana cake recipe', 'Is bread gluten-free?'],
   messages: [],
   strings: {
     promptSuggestionsTitle: 'Ask anything or try an example',
