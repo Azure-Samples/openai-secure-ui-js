@@ -267,3 +267,9 @@ export class AuthComponent extends LitElement {
     }
   `;
 }
+
+declare global {
+  interface HTMLElementTagNameMap {
+    'azc-auth': AuthComponent;
+  }
+}
