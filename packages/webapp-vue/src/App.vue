@@ -44,10 +44,11 @@ nav {
 .spacer {
   flex: 100 1 0;
 }
-azc-chat, azc-auth {
+azc-chat,
+azc-auth {
   flex: auto;
 }
-azc-auth[type="status"] {
+azc-auth[type='status'] {
   font-size: 16px;
 }
 </style>
