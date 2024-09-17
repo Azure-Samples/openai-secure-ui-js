@@ -1,17 +1,17 @@
 # 🤖 AI Chat: Reusable Chat Web Component
 
-[![NPM version](https://img.shields.io/npm/v/@azure/ai-chat-components.svg)](https://www.npmjs.com/package/@azure/ai-chat-components)
+<!-- [![NPM version](https://img.shields.io/npm/v/@azure/ai-chat-components.svg)](https://www.npmjs.com/package/@azure/ai-chat-components)
 [![Build Status](https://github.com/Azure-Samples/secure-ui-js/actions/workflows/ci.yml/badge.svg)](https://github.com/Azure-Samples/secure-ui-js/actions/workflows/ci.yml)
-![Node version](https://img.shields.io/node/v/@azure/ai-chat-components.svg)
+![Node version](https://img.shields.io/node/v/@azure/ai-chat-components.svg) -->
 [![License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 
 This package provides a reusable web component that can be used to add an AI chatbot compatible with the [Microsoft AI Chat protocol specification](https://github.com/microsoft/ai-chat-protocol/tree/main/spec#readme) to any website.
 
-## Installation
+<!-- ## Installation
 
 ```bash
 npm install @azure/ai-chat-components
-```
+``` -->
 
 ## Usage
 
