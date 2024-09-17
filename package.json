@@ -41,10 +41,10 @@
   ],
   "devDependencies": {
     "@azure/static-web-apps-cli": "^2.0.1",
-    "concurrently": "^8.2.2",
+    "concurrently": "^9.0.1",
     "ollamazure": "^1.4.0",
     "prettier": "^3.0.3",
-    "rimraf": "^5.0.10",
+    "rimraf": "^6.0.1",
     "typescript": "^5.3.3"
   },
   "engines": {
