@@ -151,6 +151,14 @@ After that you have to install the NPM dependencies:
 npm install
 ```
 
+Next, create a `.env` file in the `packages/api` folder with the following content:
+
+```bash
+OPENAI_BASE_URL=http://localhost:11434/v1
+OPENAI_API_KEY=__dummy
+OPENAI_MODEL_NAME=phi3
+```
+
 Then you can start the application by running the following command which will start the web app and the API locally:
 
 ```bash
@@ -172,9 +180,6 @@ npm start
 ```
 
 Open the URL `http://localhost:4280` in your browser, use the authentication emulator to connect to the web app, and start chatting with the bot.
-
-> [!TIP]
-> You can switch back to using Ollama models by simply deleting the `packages/api/.env` file and starting the application again. To regenerate the `.env` file, you can run `azd env get-values > packages/api/.env`.
 
 ## Resources
 
