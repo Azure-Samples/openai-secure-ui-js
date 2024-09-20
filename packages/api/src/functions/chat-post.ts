@@ -56,7 +56,6 @@ export async function postChat(stream: boolean, request: HttpRequest, context: I
     }
 
     if (stream) {
-      console.log('streaming');
       const responseStream = await openai.chat.completions.create({
         messages: [
           { role: 'system', content: systemPrompt},
@@ -108,7 +107,6 @@ export async function postChat(stream: boolean, request: HttpRequest, context: I
 // Transform the response chunks into a JSON stream
 async function* createJsonStream(chunks: AsyncIterable<ChatCompletionChunk>) {
   for await (const chunk of chunks) {
-    console.log(chunk);
     if (!chunk.choices[0]?.delta.content) continue;
 
     const responseChunk: AIChatCompletionDelta = {
