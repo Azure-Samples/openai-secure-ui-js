@@ -15,7 +15,7 @@
 
 [Overview](#overview) • [Get started](#getting-started) • [Run the sample](#run-the-sample) • [Resources](#resources) • [FAQ](#faq) • [Troubleshooting](#troubleshooting)
 
-<!-- ![Animation showing the app in action](./docs/images/TODO.gif) -->
+![Animation showing the app in action](./docs/images/demo.gif)
 
 </div>
 
