@@ -1,7 +1,7 @@
 {
   "name": "openai-secure-ui-js",
   "version": "1.0.0",
-  "description": "Reusable OpenAI secure UI for AI Chat with Azure",
+  "description": "Reusable OpenAI secure UI and infrastructure for AI Chat with Azure",
   "private": true,
   "scripts": {
     "start": "npm run start --workspace=@azure/ai-chat-components",
