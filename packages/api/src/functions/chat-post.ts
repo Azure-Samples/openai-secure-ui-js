@@ -10,7 +10,7 @@ import { ChatCompletionChunk } from 'openai/resources';
 const azureOpenAiScope = 'https://cognitiveservices.azure.com/.default';
 const systemPrompt = `Assistant helps the user with cooking questions. Be brief in your answers. Answer only plain text, DO NOT use Markdown.
 
-Generate 3 very brief follow-up questions that the user would likely ask next, based on the context.
+After your answer, ALWAYS generate 3 very brief follow-up questions that the user would likely ask next, based on the context.
 Enclose the follow-up questions in double angle brackets. Example:
 <<What ingredients I need to bake cookies?>>
 <<What flavour can I use in my cookies?>>
