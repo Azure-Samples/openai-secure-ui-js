@@ -5,7 +5,7 @@ import '@azure/ai-chat-components';
 <template>
   <nav>
     <div class="container">
-      <img class="logo" src="../favicon.png" alt="AI Chat logo" width="36" height="36" />
+      <img class="logo" src="../public/favicon.png" alt="AI Chat logo" width="36" height="36" />
       AI Chat
       <div class="spacer"></div>
       <azc-auth type="status"></azc-auth>
