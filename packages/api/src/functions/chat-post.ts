@@ -21,8 +21,6 @@ Make sure the last question ends with ">>".
 `;
 
 export async function postChat(stream: boolean, request: HttpRequest, context: InvocationContext): Promise<HttpResponseInit> {
-  const azureOpenAiEndpoint = process.env.AZURE_OPENAI_API_ENDPOINT || 'http://localhost:4041';
-
   try {
     const requestBody = (await request.json()) as AIChatCompletionRequest;
     const { messages } = requestBody;
