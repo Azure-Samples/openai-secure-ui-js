@@ -27,11 +27,11 @@ Once the package is installed, you can use the web components in your HTML code:
 
 Depending of the framework and build system you're using, you'll have to import the web component in your JS code in different ways. You can have a look at the various integrations examples here:
 
-- [Vanilla HTML](https://github.com/Azure-Samples/secure-ui-js/tree/main/packages/webapp-html)
-- [Angular](https://github.com/Azure-Samples/secure-ui-js/tree/main/packages/webapp-angular)
-- [React](https://github.com/Azure-Samples/secure-ui-js/tree/main/packages/webapp-react)
-- [Vue](https://github.com/Azure-Samples/secure-ui-js/tree/main/packages/webapp-vue)
-- [Svelte](https://github.com/Azure-Samples/secure-ui-js/tree/main/packages/webapp-svelte)
+- [Vanilla HTML](../webapp-html)
+- [Angular](../webapp-angular)
+- [React](../webapp-react)
+- [Vue](../webapp-vue)
+- [Svelte](../webapp-svelte)
 
 ### Configuration
 

@@ -33,7 +33,7 @@ This application is made from multiple components:
 
 - Reusable and customizable web components built with [Lit](https://lit.dev) handling user authentication and providing an AI chat UI. The code is located in the `packages/ai-chat-components` folder.
 
-- Example web app integrations of the web components, hosted on [Azure Static Web Apps](https://learn.microsoft.com/azure/static-web-apps/overview). There are example using [static HTML](./packages/webapp-html/), [React](./packages/web-app-react/), [Angular](./packages/webapp-angular/), [Vue](./packages/webapp-vue/) and [Svelte](./packages/webapp-svelte/).
+- Example web app integrations of the web components, hosted on [Azure Static Web Apps](https://learn.microsoft.com/azure/static-web-apps/overview). There are example using [static HTML](./packages/webapp-html/), [React](./packages/webapp-react/), [Angular](./packages/webapp-angular/), [Vue](./packages/webapp-vue/) and [Svelte](./packages/webapp-svelte/).
 
 - A serverless API built with [Azure Functions](https://learn.microsoft.com/azure/azure-functions/functions-overview?pivots=programming-language-javascript) and using [OpenAI SDK](https://github.com/openai/openai-node) to generate responses to the user chat queries. The code is located in the `packages/api` folder.
 
@@ -124,6 +124,27 @@ The deployment process will take a few minutes. Once it's done, you'll see the U
 </div>
 
 You can now open the web app in your browser and start chatting with the bot.
+
+##### (Optional) Using a different framework for the webapp
+
+By default, the sample deploys the static HTML version of the webapp. However, we provide example integrations of the UI web components with different web app frameworks:
+
+- [static HTML](./packages/webapp-html/)
+- [React](./packages/webapp-react/)
+- [Angular](./packages/webapp-angular/)
+- [Vue](./packages/webapp-vue/)
+- [Svelte](./packages/webapp-svelte/)
+
+If you want to switch the deployment to use any of these, edit the file `azure.yaml` in the root of the project and changes the project path to the one you want to deploy for the webapp service:
+
+```yaml
+services:
+  webapp:
+    # Change here to the path of the web app you want to deploy,
+    # for example, to deploy the React version of the web app
+    # change it to ./packages/webapp-react
+    project: ./packages/webapp-html
+```
 
 #### Clean up
 
