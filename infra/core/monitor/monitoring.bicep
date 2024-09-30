@@ -17,7 +17,7 @@ module logAnalytics 'loganalytics.bicep' = {
 module applicationInsights 'applicationinsights.bicep' = {
   name: 'applicationinsights'
   params: {
-    name: applicationInsightsName
+    applicationInsightsName: applicationInsightsName
     location: location
     tags: tags
     dashboardName: applicationInsightsDashboardName

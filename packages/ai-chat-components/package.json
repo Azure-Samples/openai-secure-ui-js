@@ -54,6 +54,7 @@
     "branches": "main"
   },
   "dependencies": {
+    "@azure/ai-chat-components": "^1.0.0",
     "@microsoft/ai-chat-protocol": "^1.0.0-beta.20240814.1",
     "lit": "^3.0.0"
   },
@@ -62,7 +63,7 @@
     "semantic-release": "^24.1.0",
     "semantic-release-npm-github": "^5.0.0",
     "typescript": "^5.6.2",
-    "vite": "^5.0.8"
+    "vite": "^5.4.8"
   },
   "engines": {
     "node": ">=20"

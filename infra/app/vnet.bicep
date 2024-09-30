@@ -24,11 +24,7 @@ module virtualNetwork 'br/public:avm/res/network/virtual-network:0.4.0' = {
     vnetEncryption: false
     subnets: [
       {
-        addressPrefix: '<addressPrefix>'
-        name: 'GatewaySubnet'
-      }
-      {
-        addressPrefix: '10.0.1.0/24'
+        addressPrefix: '10.0.0.0/24'
         name: appSubnetName
         delegation: 'Microsoft.App/environments'
         serviceEndpoints: [
@@ -42,5 +38,5 @@ module virtualNetwork 'br/public:avm/res/network/virtual-network:0.4.0' = {
   }
 }
 
-output appSubnetName string = virtualNetwork.outputs.subnetNames[0].name
-output appSubnetID string = virtualNetwork.outputs.subnetNames[0].id
+output appSubnetName string = virtualNetwork.outputs.subnetNames[0]
+output appSubnetID string = virtualNetwork.outputs.subnetResourceIds[0]

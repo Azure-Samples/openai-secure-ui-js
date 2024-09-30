@@ -1,5 +1,5 @@
 metadata description = 'Creates an Application Insights instance based on an existing Log Analytics workspace.'
-param name string
+param applicationInsightsName string
 param dashboardName string = ''
 param location string = resourceGroup().location
 param tags object = {}
@@ -9,9 +9,9 @@ param logAnalyticsWorkspaceId string
 
 @description('Azure Application Insights, the workload\' log & metric sink and APM tool')
 module applicationInsights 'br/public:avm/res/insights/component:0.3.1' = {
-  name: take('applicationInsights-${uniqueString(resourceGroup().id)}', 64)
+  name: applicationInsightsName
   params: {
-    name: name
+    name: applicationInsightsName
     location: location
     kind: 'web'
     tags: tags

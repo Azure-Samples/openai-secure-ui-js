@@ -3,8 +3,8 @@ param name string
 param location string = resourceGroup().location
 param tags object = {}
 
-param kind string = ''
-param zoneredundant bool = true
+param kind string = 'Linux'
+param zoneredundant bool = false
 param reserved bool = true
 param sku object
 
@@ -18,7 +18,6 @@ module serverfarm 'br/public:avm/res/web/serverfarm:0.2.3' = {
     kind: kind
     location: location
     perSiteScaling: true
-    skuCapacity: sku.capacity
     skuName: sku.name
     tags: tags
     zoneRedundant: zoneredundant

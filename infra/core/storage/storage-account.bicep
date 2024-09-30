@@ -57,8 +57,9 @@ module storageAccount 'br/public:avm/res/storage/storage-account:0.13.0' = {
       corsRules: corsRules
       containers: [for container in containers: {
         name: container.name
-        publicAccess: container.publicAccess ?? 'None'
-      }]
+      }
+      
+    ]
       deleteRetentionPolicyDays: 9
       deleteRetentionPolicyEnabled: true
     }

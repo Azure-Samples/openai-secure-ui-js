@@ -42,12 +42,14 @@ module site 'br/public:avm/res/web/site:0.9.0' = {
     name: name
     tags: tags
     serverFarmResourceId: appServicePlanId
+    
     // Non-required parameters
     appInsightResourceId: applicationInsights.id
     appSettingsKeyValuePairs: union({
       AzureFunctionsJobHost__logging__logLevel__default: 'Trace'
       FUNCTIONS_EXTENSION_VERSION: runtimeVersion
       FUNCTIONS_WORKER_RUNTIME: runtimeName
+      WEBSITE_RUN_FROM_PACKAGE: '1' 
       AzureWebJobsStorage__accountName: storage.name},
       runtimeName == 'python' && appCommandLine == '' ? { PYTHON_ENABLE_GUNICORN_MULTIWORKERS: 'true'} : {},
       !empty(applicationInsightsName) ? { APPLICATIONINSIGHTS_CONNECTION_STRING: applicationInsights.properties.ConnectionString } : {},

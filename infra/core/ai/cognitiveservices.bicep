@@ -40,7 +40,7 @@ module account 'br/public:avm/res/cognitive-services/account:0.7.0' = {
         name: 'Standard'
         capacity: 20
       }
-      raiPolicyName: deployment.raiPolicyName ?? null
+     // raiPolicyName: deployment.raiPolicyName ?? null
     }]
     location: location
     
