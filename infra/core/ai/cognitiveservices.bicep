@@ -22,35 +22,36 @@ param networkAcls object = empty(allowedIpRules) ? {
   defaultAction: 'Deny'
 }
 
-resource account 'Microsoft.CognitiveServices/accounts@2023-05-01' = {
-  name: name
-  location: location
-  tags: tags
-  kind: kind
-  properties: {
+
+
+module account 'br/public:avm/res/cognitive-services/account:0.7.0' = {
+  name: 'accountDeployment'
+  params: {
+    // Required parameters
+    kind: kind
+    name: name
+    sku: sku.name
+    tags: tags
     customSubDomainName: customSubDomainName
+    deployments: [for deployment in deployments: {
+      model: deployment.model
+      name: deployment.name
+      sku: deployment.sku ?? {
+        name: 'Standard'
+        capacity: 20
+      }
+      raiPolicyName: deployment.raiPolicyName ?? null
+    }]
+    location: location
+    
     publicNetworkAccess: publicNetworkAccess
     networkAcls: networkAcls
     disableLocalAuth: disableLocalAuth
   }
-  sku: sku
 }
 
-@batchSize(1)
-resource deployment 'Microsoft.CognitiveServices/accounts/deployments@2023-05-01' = [for deployment in deployments: {
-  parent: account
-  name: deployment.name
-  properties: {
-    model: deployment.model
-    raiPolicyName: contains(deployment, 'raiPolicyName') ? deployment.raiPolicyName : null
-  }
-  sku: contains(deployment, 'sku') ? deployment.sku : {
-    name: 'Standard'
-    capacity: 20
-  }
-}]
 
-output endpoint string = account.properties.endpoint
-output endpoints object = account.properties.endpoints
-output id string = account.id
+output endpoint string = account.outputs.endpoint
+output endpoints object = account.outputs.endpoints
+output id string = account.outputs.resourceId
 output name string = account.name

@@ -6,11 +6,13 @@ resource staticWebApp 'Microsoft.Web/staticSites@2023-12-01' existing = {
   name: staticWebAppName
 }
 
-resource linkedStaticWebAppBackend 'Microsoft.Web/staticSites/linkedBackends@2023-12-01' = {
-  parent: staticWebApp
+module staticSite 'br/public:avm/res/web/static-site:0.6.0'  = {
   name: 'linkedBackend'
-  properties: {
+  params: {
+    name: staticWebApp.name
+    linkedBackend:{
     backendResourceId: backendResourceId
     region: backendLocation
+    }
   }
 }

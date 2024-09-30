@@ -8,15 +8,19 @@ param sku object = {
   tier: 'Free'
 }
 
-resource web 'Microsoft.Web/staticSites@2023-12-01' = {
-  name: name
-  location: location
-  tags: tags
-  sku: sku
-  properties: {
+module staticSite 'br/public:avm/res/web/static-site:0.6.0' = {
+  name: 'staticSiteDeployment'
+  params: {
+    // Required parameters
+    name: name
+    // Non-required parameters
+    location: location
+    tags: tags
+    sku: sku.name
     provider: 'Custom'
   }
 }
 
-output name string = web.name
-output uri string = 'https://${web.properties.defaultHostname}'
+
+output name string = staticSite.name
+output uri string = 'https://${staticSite.outputs.defaultHostname}'

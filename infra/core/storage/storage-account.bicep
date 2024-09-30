@@ -32,13 +32,17 @@ param networkAcls object = {
 param publicNetworkAccess string = 'Enabled'
 param sku object = { name: 'Standard_LRS' }
 
-resource storage 'Microsoft.Storage/storageAccounts@2023-01-01' = {
-  name: name
-  location: location
-  tags: tags
-  kind: kind
-  sku: sku
-  properties: {
+
+
+
+module storageAccount 'br/public:avm/res/storage/storage-account:0.13.0' = {
+  name: 'storageAccountDeployment'
+  params: {
+    // Required parameters
+    name: name
+    // Non-required parameters
+    location: location
+    kind: kind
     accessTier: accessTier
     allowBlobPublicAccess: allowBlobPublicAccess
     allowCrossTenantReplication: allowCrossTenantReplication
@@ -49,53 +53,52 @@ resource storage 'Microsoft.Storage/storageAccounts@2023-01-01' = {
     networkAcls: networkAcls
     publicNetworkAccess: publicNetworkAccess
     supportsHttpsTrafficOnly: supportsHttpsTrafficOnly
-  }
-
-  resource blobServices 'blobServices' = if (!empty(containers)) {
-    name: 'default'
-    properties: {
-      cors: {
-        corsRules: corsRules
-      }
-      deleteRetentionPolicy: deleteRetentionPolicy
+    blobServices: {
+      corsRules: corsRules
+      containers: [for container in containers: {
+        name: container.name
+        publicAccess: container.publicAccess ?? 'None'
+      }]
+      deleteRetentionPolicyDays: 9
+      deleteRetentionPolicyEnabled: true
     }
-    resource container 'containers' = [for container in containers: {
-      name: container.name
-      properties: {
-        publicAccess: contains(container, 'publicAccess') ? container.publicAccess : 'None'
-      }
-    }]
-  }
-
-  resource fileServices 'fileServices' = if (!empty(files)) {
-    name: 'default'
-    properties: {
-      cors: {
-        corsRules: corsRules
-      }
-      shareDeleteRetentionPolicy: shareDeleteRetentionPolicy
+    fileServices: empty(files) ? null : {
+      corsRules: corsRules
+      shares: [
+        {
+          accessTier: 'Hot'
+          name: 'default'
+          shareQuota: 5120
+          deletedShareRetentionDays: shareDeleteRetentionPolicy
+        }
+        
+      ]
     }
-  }
-
-  resource queueServices 'queueServices' = if (!empty(queues)) {
-    name: 'default'
-    properties: {
-
+   
+    queueServices: {
+      corsRules: corsRules
+      queues: [for queue in queues: {
+        name: queue.name
+        metadata: queue.metadata ?? {}  // If metadata is missing or null, use an empty object
+      }]
     }
-    resource queue 'queues' = [for queue in queues: {
-      name: queue.name
-      properties: {
-        metadata: {}
-      }
-    }]
-  }
-
-  resource tableServices 'tableServices' = if (!empty(tables)) {
-    name: 'default'
-    properties: {}
+    
+    requireInfrastructureEncryption: true
+    skuName: sku.name
+    tableServices: {
+      corsRules: corsRules
+      tables: [
+        for table in tables: {
+          name: table.name ?? 'defaultTableName'
+        }
+      ]
+    }
+    
+    
+    tags: tags
   }
 }
 
-output id string = storage.id
-output name string = storage.name
-output primaryEndpoints object = storage.properties.primaryEndpoints
+output id string = storageAccount.outputs.resourceId
+output name string = storageAccount.name
+output primaryEndpoints object = storageAccount.outputs.serviceEndpoints

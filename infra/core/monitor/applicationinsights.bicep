@@ -5,16 +5,20 @@ param location string = resourceGroup().location
 param tags object = {}
 param logAnalyticsWorkspaceId string
 
-resource applicationInsights 'Microsoft.Insights/components@2020-02-02' = {
-  name: name
-  location: location
-  tags: tags
-  kind: 'web'
-  properties: {
-    Application_Type: 'web'
-    WorkspaceResourceId: logAnalyticsWorkspaceId
+
+
+@description('Azure Application Insights, the workload\' log & metric sink and APM tool')
+module applicationInsights 'br/public:avm/res/insights/component:0.3.1' = {
+  name: take('applicationInsights-${uniqueString(resourceGroup().id)}', 64)
+  params: {
+    name: name
+    location: location
+    kind: 'web'
+    tags: tags
+    workspaceResourceId: logAnalyticsWorkspaceId
   }
 }
+
 
 module applicationInsightsDashboard 'applicationinsights-dashboard.bicep' = if (!empty(dashboardName)) {
   name: 'application-insights-dashboard'
@@ -25,7 +29,7 @@ module applicationInsightsDashboard 'applicationinsights-dashboard.bicep' = if (
   }
 }
 
-output connectionString string = applicationInsights.properties.ConnectionString
-output id string = applicationInsights.id
-output instrumentationKey string = applicationInsights.properties.InstrumentationKey
+output connectionString string = applicationInsights.outputs.connectionString
+output id string = applicationInsights.outputs.resourceId
+output instrumentationKey string = applicationInsights.outputs.instrumentationKey
 output name string = applicationInsights.name

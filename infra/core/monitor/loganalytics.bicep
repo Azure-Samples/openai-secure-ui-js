@@ -3,20 +3,19 @@ param name string
 param location string = resourceGroup().location
 param tags object = {}
 
-resource logAnalytics 'Microsoft.OperationalInsights/workspaces@2021-12-01-preview' = {
-  name: name
-  location: location
-  tags: tags
-  properties: any({
-    retentionInDays: 30
-    features: {
-      searchVersion: 1
-    }
-    sku: {
-      name: 'PerGB2018'
-    }
-  })
+
+module workspace 'br/public:avm/res/operational-insights/workspace:0.7.0' = {
+  name: 'workspaceDeployment'
+  params: {
+    // Required parameters
+    name: name
+    // Non-required parameters
+    location: location
+    tags: tags
+    skuName: 'PerGB2018'
+    dataRetention: 30
+  }
 }
 
-output id string = logAnalytics.id
-output name string = logAnalytics.name
+output id string = workspace.outputs.resourceId
+output name string = workspace.name

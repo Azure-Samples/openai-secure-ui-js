@@ -9,57 +9,38 @@ param appSubnetName string = 'app'
 
 param tags object = {}
 
-resource virtualNetwork 'Microsoft.Network/virtualNetworks@2023-05-01' = {
-  name: name
-  location: location
-  tags: tags
-  properties: {
-    addressSpace: {
-      addressPrefixes: [
-        '10.0.0.0/16'
-      ]
-    }
-    encryption: {
-      enabled: false
-      enforcement: 'AllowUnencrypted'
-    }
+
+
+module virtualNetwork 'br/public:avm/res/network/virtual-network:0.4.0' = {
+  name: 'virtualNetworkDeployment'
+  params: {
+    // Required parameters
+    addressPrefixes: [
+      '10.0.0.0/16'
+    ]
+    name: name
+    location: location
+    vnetEncryptionEnforcement: 'AllowUnencrypted'
+    vnetEncryption: false
     subnets: [
       {
+        addressPrefix: '<addressPrefix>'
+        name: 'GatewaySubnet'
+      }
+      {
+        addressPrefix: '10.0.1.0/24'
         name: appSubnetName
-        id: resourceId('Microsoft.Network/virtualNetworks/subnets', name, 'app')
-        properties: {
-          addressPrefixes: [
-            '10.0.1.0/24'
-          ]
-          delegations: [
-            {
-              name: 'delegation'
-              id: '${resourceId('Microsoft.Network/virtualNetworks/subnets', name, 'app')}/delegations/delegation'
-              properties: {
-                //Microsoft.App/environments is the correct delegation for Flex Consumption VNet integration
-                serviceName: 'Microsoft.App/environments'
-              }
-              type: 'Microsoft.Network/virtualNetworks/subnets/delegations'
-            }
-          ]
-          serviceEndpoints: [
-            {
-              service: 'Microsoft.Storage'
-              locations: [
-                resourceGroup().location
-              ]
-            }
-          ]
-          privateEndpointNetworkPolicies: 'Disabled'
-          privateLinkServiceNetworkPolicies: 'Enabled'
-        }
-        type: 'Microsoft.Network/virtualNetworks/subnets'
+        delegation: 'Microsoft.App/environments'
+        serviceEndpoints: [
+          'Microsoft.Storage'
+        ]
+        privateEndpointNetworkPolicies: 'Disabled'
+        privateLinkServiceNetworkPolicies: 'Enabled'
       }
     ]
-    virtualNetworkPeerings: []
-    enableDdosProtection: false
+    tags: tags
   }
 }
 
-output appSubnetName string = virtualNetwork.properties.subnets[0].name
-output appSubnetID string = virtualNetwork.properties.subnets[0].id
+output appSubnetName string = virtualNetwork.outputs.subnetNames[0].name
+output appSubnetID string = virtualNetwork.outputs.subnetNames[0].id
