@@ -24,10 +24,6 @@ module virtualNetwork 'br/public:avm/res/network/virtual-network:0.4.0' = {
     vnetEncryption: false
     subnets: [
       {
-        addressPrefix: '<addressPrefix>'
-        name: 'GatewaySubnet'
-      }
-      {
         addressPrefix: '10.0.1.0/24'
         name: appSubnetName
         delegation: 'Microsoft.App/environments'
