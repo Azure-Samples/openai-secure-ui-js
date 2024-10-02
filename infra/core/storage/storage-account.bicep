@@ -14,7 +14,7 @@ param allowSharedKeyAccess bool = true
 param containers array = []
 param corsRules array = []
 param defaultToOAuthAuthentication bool = false
-param deleteRetentionPolicy object = {}
+//param deleteRetentionPolicy object = {}
 @allowed([ 'AzureDnsZone', 'Standard' ])
 param dnsEndpointType string = 'Standard'
 param files array = []
@@ -101,5 +101,5 @@ module storageAccount 'br/public:avm/res/storage/storage-account:0.13.0' = {
 }
 
 output id string = storageAccount.outputs.resourceId
-output name string = storageAccount.name
+output name string = storageAccount.outputs.name
 output primaryEndpoints object = storageAccount.outputs.serviceEndpoints

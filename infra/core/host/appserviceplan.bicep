@@ -26,4 +26,4 @@ module serverfarm 'br/public:avm/res/web/serverfarm:0.2.3' = {
 }
 
 output id string = serverfarm.outputs.resourceId
-output name string = serverfarm.name
+output name string = serverfarm.outputs.name

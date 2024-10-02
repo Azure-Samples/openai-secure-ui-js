@@ -22,5 +22,5 @@ module staticSite 'br/public:avm/res/web/static-site:0.6.0' = {
 }
 
 
-output name string = staticSite.name
+output name string = staticSite.outputs.name
 output uri string = 'https://${staticSite.outputs.defaultHostname}'

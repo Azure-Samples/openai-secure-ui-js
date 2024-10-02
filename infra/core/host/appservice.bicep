@@ -131,6 +131,6 @@ resource applicationInsights 'Microsoft.Insights/components@2020-02-02' existing
 
 output id string = site.outputs.resourceId
 output identityPrincipalId string = site.outputs.systemAssignedMIPrincipalId
-output name string = site.name
+output name string = site.outputs.name
 output uri string = 'https://${site.outputs.defaultHostname}'
 

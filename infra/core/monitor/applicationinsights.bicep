@@ -32,4 +32,4 @@ module applicationInsightsDashboard 'applicationinsights-dashboard.bicep' = if (
 output connectionString string = applicationInsights.outputs.connectionString
 output id string = applicationInsights.outputs.resourceId
 output instrumentationKey string = applicationInsights.outputs.instrumentationKey
-output name string = applicationInsights.name
+output name string = applicationInsights.outputs.name

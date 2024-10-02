@@ -18,4 +18,4 @@ module workspace 'br/public:avm/res/operational-insights/workspace:0.7.0' = {
 }
 
 output id string = workspace.outputs.resourceId
-output name string = workspace.name
+output name string = workspace.outputs.name

@@ -54,4 +54,4 @@ module account 'br/public:avm/res/cognitive-services/account:0.7.0' = {
 output endpoint string = account.outputs.endpoint
 output endpoints object = account.outputs.endpoints
 output id string = account.outputs.resourceId
-output name string = account.name
+output name string = account.outputs.name

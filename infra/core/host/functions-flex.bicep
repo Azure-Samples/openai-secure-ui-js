@@ -34,52 +34,13 @@ param numberOfWorkers int = -1
 param healthCheckPath string = ''
 param storageAccountName string
 
-module site 'br/public:avm/res/web/site:0.9.0' = {
-  name: 'siteDeployment'
-  params: {
-    // Required parameters
-    kind: kind
-    name: name
-    tags: tags
-    serverFarmResourceId: appServicePlanId
-    
-    // Non-required parameters
-    appInsightResourceId: applicationInsights.id
-    appSettingsKeyValuePairs: union({
-      AzureFunctionsJobHost__logging__logLevel__default: 'Trace'
-      FUNCTIONS_EXTENSION_VERSION: runtimeVersion
-      FUNCTIONS_WORKER_RUNTIME: runtimeName
-      WEBSITE_RUN_FROM_PACKAGE: '1' 
-      AzureWebJobsStorage__accountName: storage.name},
-      runtimeName == 'python' && appCommandLine == '' ? { PYTHON_ENABLE_GUNICORN_MULTIWORKERS: 'true'} : {},
-      !empty(applicationInsightsName) ? { APPLICATIONINSIGHTS_CONNECTION_STRING: applicationInsights.properties.ConnectionString } : {},
-      !empty(keyVaultName) ? { AZURE_KEY_VAULT_ENDPOINT: keyVault.properties.vaultUri } : {})
-    logsConfiguration: {
-      applicationLogs: {
-        fileSystem: {
-          level: 'Verbose'
-        }
-      }
-      detailedErrorMessages: {
-        enabled: true
-      }
-      failedRequestsTracing: {
-        enabled: true
-      }
-      httpLogs: {
-        fileSystem: {
-          enabled: true
-          retentionInDays: 1
-          retentionInMb: 35
-        }
-      }
-    }
-    
-    keyVaultAccessIdentityResourceId: keyVault.id
-    location: location
-    managedIdentities: {
-      systemAssigned: true
-    }
+resource functions 'Microsoft.Web/sites@2023-12-01' = {
+  name: name
+  location: location
+  tags: tags
+  kind: kind
+  properties: {
+    serverFarmId: appServicePlanId
     siteConfig: {
       ftpsState: 'FtpsOnly'
       alwaysOn: alwaysOn
@@ -92,15 +53,61 @@ module site 'br/public:avm/res/web/site:0.9.0' = {
         allowedOrigins: union([ 'https://portal.azure.com', 'https://ms.portal.azure.com' ], allowedOrigins)
       }
     }
-    virtualNetworkSubnetId: !empty(virtualNetworkSubnetId) ? virtualNetworkSubnetId : null
-    storageAccountResourceId: storage.id
-    storageAccountUseIdentityAuthentication: true
+    functionAppConfig: {
+      deployment: {
+        storage: {
+          type: 'blobContainer'
+          value: '${storage.properties.primaryEndpoints.blob}${name}'
+          authentication: {
+            type: 'SystemAssignedIdentity'
+          }
+        }
+      }
+      scaleAndConcurrency: {
+        maximumInstanceCount: maximumInstanceCount
+        instanceMemoryMB: instanceMemoryMB
+      }
+      runtime: { 
+        name: runtimeName
+        version: runtimeVersion
+      }
+    }
     clientAffinityEnabled: clientAffinityEnabled
+    httpsOnly: true
+    virtualNetworkSubnetId: !empty(virtualNetworkSubnetId) ? virtualNetworkSubnetId : null
+  }
+
+  identity: { type: 'SystemAssigned' }
+}
+
+// Updates to the single Microsoft.sites/web/config resources that need to be performed sequentially
+// sites/web/config 'appsettings'
+module configAppSettings 'appservice-appsettings.bicep' = {
+  name: '${name}-appSettings'
+  params: {
+    name: functions.name
+    appSettings: union(appSettings,
+      {
+        AzureWebJobsStorage__accountName: storage.name
+      },
+      runtimeName == 'python' && appCommandLine == '' ? { PYTHON_ENABLE_GUNICORN_MULTIWORKERS: 'true'} : {},
+      !empty(applicationInsightsName) ? { APPLICATIONINSIGHTS_CONNECTION_STRING: applicationInsights.properties.ConnectionString } : {},
+      !empty(keyVaultName) ? { AZURE_KEY_VAULT_ENDPOINT: keyVault.properties.vaultUri } : {})
   }
 }
 
-
-
+// sites/web/config 'logs'
+resource configLogs 'Microsoft.Web/sites/config@2022-03-01' = {
+  name: 'logs'
+  parent: functions
+  properties: {
+    applicationLogs: { fileSystem: { level: 'Verbose' } }
+    detailedErrorMessages: { enabled: true }
+    failedRequestsTracing: { enabled: true }
+    httpLogs: { fileSystem: { enabled: true, retentionInDays: 1, retentionInMb: 35 } }
+  }
+  dependsOn: [configAppSettings]
+}
 
 resource keyVault 'Microsoft.KeyVault/vaults@2022-07-01' existing = if (!(empty(keyVaultName))) {
   name: keyVaultName
@@ -118,15 +125,15 @@ var storageContributorRole = subscriptionResourceId('Microsoft.Authorization/rol
 
 resource storageContainer 'Microsoft.Authorization/roleAssignments@2022-04-01' = {
   scope: storage // Use when specifying a scope that is different than the deployment scope
-  name: guid(subscription().id, resourceGroup().id, storageContributorRole)
+  name: guid(subscription().id, resourceGroup().id, functions.id, storageContributorRole)
   properties: {
     roleDefinitionId: storageContributorRole
     principalType: 'ServicePrincipal'
-    principalId: site.outputs.systemAssignedMIPrincipalId
+    principalId: functions.identity.principalId
   }
 }
 
-output id string = site.outputs.resourceId
-output identityPrincipalId string = site.outputs.systemAssignedMIPrincipalId
-output name string = site.name
-output uri string = 'https://${site.outputs.defaultHostname}'
+output id string = functions.id
+output identityPrincipalId string = functions.identity.principalId
+output name string = functions.name
+output uri string = 'https://${functions.properties.defaultHostName}'
