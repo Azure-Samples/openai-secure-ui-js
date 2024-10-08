@@ -17,7 +17,7 @@ services:
     host: function
 
 hooks:
-  predeploy:
+  prepackage:
     windows:
       shell: pwsh
       run: npm run build:wc
