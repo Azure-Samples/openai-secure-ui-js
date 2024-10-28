@@ -1,7 +1,8 @@
 name: Template Validation Sample Workflow
 on: 
-  branch:
-    - ai-gallery:
+  push:
+    branches:
+      - ai-gallery
   workflow_dispatch:
 
 permissions:
