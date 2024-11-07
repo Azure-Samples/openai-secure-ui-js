@@ -7,6 +7,14 @@ param environmentName string
 
 @minLength(1)
 @description('Primary location for all resources')
+// Flex Consumption functions are only supported in these regions.
+// Run `az functionapp list-flexconsumption-locations --output table` to get the latest list
+@allowed(['northeurope', 'southeastasia', 'eastasia', 'eastus2', 'southcentralus', 'australiaeast', 'eastus', 'northcentralus(stage)', 'westus2', 'uksouth', 'eastus2euap', 'westus3', 'swedencentral'])
+@metadata({
+  azd: {
+    type: 'location'
+  }
+})
 param location string
 
 param resourceGroupName string = ''
@@ -40,14 +48,6 @@ param openAiApiKey string = ''
 })
 param webappLocation string // Set in main.parameters.json
 
-@description('Location for the Azure Functions')
-@allowed(['eastus', 'northeurope', 'southeastasia', 'eastasia', 'eastus2', 'southcentralus', 'australiaeast', 'westus2', 'uksouth', 'eastus2euap', 'westus3', 'swedencentral'])
-@metadata({
-  azd: {
-    type: 'location'
-  }
-})
-param apiLocation string // Set in main.parameters.json
 
 param chatModelName string // Set in main.parameters.json
 param chatDeploymentName string = chatModelName
@@ -95,7 +95,7 @@ module api './app/api.bicep' = {
   scope: resourceGroup
   params: {
     name: apiResourceName
-    location: apiLocation
+    location: location
     tags: union(tags, { 'azd-service-name': apiServiceName })
     appServicePlanId: appServicePlan.outputs.id
     allowedOrigins: [webapp.outputs.uri]

@@ -20,10 +20,10 @@ hooks:
   prepackage:
     windows:
       shell: pwsh
-      run: npm run build:wc
+      run: npm ci && npm run build:wc
     posix:
       shell: sh
-      run: npm run build:wc
+      run: npm ci && npm run build:wc
   postprovision:
     windows:
       shell: pwsh
