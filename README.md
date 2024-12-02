@@ -6,6 +6,7 @@
 # Azure OpenAI secure UI starter
 
 [![Open project in GitHub Codespaces](https://img.shields.io/badge/Codespaces-Open-blue?style=flat-square&logo=github)](https://codespaces.new/Azure-Samples/openai-secure-ui-js?hide_repo_select=true&ref=main&quickstart=true)
+[![Watch to learn more about GenAI with JS on YouTube](https://img.shields.io/badge/YouTube-d95652.svg?style=flat-square&logo=youtube)](https://www.youtube.com/playlist?list=PLlrxD0HtieHi5ZpsHULPLxm839IrhmeDk)
 [![Build Status](https://img.shields.io/github/actions/workflow/status/Azure-Samples/openai-secure-ui-js/ci.yml?style=flat-square&label=Build)](https://github.com/Azure-Samples/openai-secure-ui-js/actions)
 ![Node version](https://img.shields.io/badge/Node.js->=20-3c873a?style=flat-square)
 [![TypeScript](https://img.shields.io/badge/TypeScript-blue?style=flat-square&logo=typescript&logoColor=white)](https://www.typescriptlang.org)
@@ -211,6 +212,7 @@ Open the URL `http://localhost:4280` in your browser, use the authentication emu
 Here are some resources to learn more about Azure OpenAI and related technologies:
 
 - [Serverless AI Chat sample](https://github.com/Azure-Samples/serverless-chat-langchainjs)
+- [Generative AI with JavaScript](https://github.com/microsoft/generative-ai-with-javascript)
 - [Generative AI For Beginners](https://github.com/microsoft/generative-ai-for-beginners)
 - [Azure OpenAI Service](https://learn.microsoft.com/azure/ai-services/openai/overview)
 - [Chat + Enterprise data with Azure OpenAI and Azure AI Search](https://github.com/Azure-Samples/azure-search-openai-javascript)
