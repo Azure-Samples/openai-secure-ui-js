@@ -11,11 +11,21 @@ param principalId string
 param principalType string = 'ServicePrincipal'
 param roleDefinitionId string
 
-resource role 'Microsoft.Authorization/roleAssignments@2022-04-01' = {
-  name: guid(subscription().id, resourceGroup().id, principalId, roleDefinitionId)
-  properties: {
-    principalId: principalId
-    principalType: principalType
-    roleDefinitionId: resourceId('Microsoft.Authorization/roleDefinitions', roleDefinitionId)
+
+
+module userAssignedIdentity 'br/public:avm/res/managed-identity/user-assigned-identity:0.4.0' = {
+  name: 'userAssignedIdentityDeployment'
+  params: {
+    // Required parameters
+    name: guid(subscription().id, resourceGroup().id, principalId, roleDefinitionId)
+    // Non-required parameters
+    roleAssignments: [
+      {
+        name: 'b1a2c427-c4b1-435a-9b82-40c1b59537ac'
+        principalId: principalId
+        principalType: principalType
+        roleDefinitionIdOrName: resourceId('Microsoft.Authorization/roleDefinitions', roleDefinitionId)
+      }
+    ]
   }
 }
