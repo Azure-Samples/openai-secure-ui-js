@@ -129,7 +129,16 @@ The deployment process will take a few minutes. Once it's done, you'll see the U
 </div>
 
 You can now open the web app in your browser and start chatting with the bot.
+##### (Optional) Enable additional user context to Microsoft Defender for Cloud
+In case you have Microsoft Defender for Cloud protection on your Azure OpenAI resource and you want to have additional context on the alerts, run this command:
+```bash
+azd env set MS_DEFENDER_ENABLED true
+```
 
+To customize the application name of the context, run this command:
+```bash
+azd env set APPLICATION_NAME <your application name>
+```
 ##### (Optional) Using a different framework for the webapp
 
 By default, the sample deploys the static HTML version of the webapp. However, we provide example integrations of the UI web components with different web app frameworks:
