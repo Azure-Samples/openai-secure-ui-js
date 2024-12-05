@@ -56,9 +56,7 @@ export async function postChat(stream: boolean, request: HttpRequest, context: I
 
     var userContext: string | undefined;
     if (process.env.MS_DEFENDER_ENABLED) {
-      const applicationName = process.env.APPLICATION_NAME?? "";
-      const conversationId = context?.invocationId;
-      userContext = getMsDefenderUserJson(request, conversationId, applicationName, context);
+      userContext = getMsDefenderUserJson(request);
     }
 
     if (stream) {

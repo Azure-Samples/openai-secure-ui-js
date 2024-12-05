@@ -1,41 +1,71 @@
-import { HttpRequest, InvocationContext } from '@azure/functions';
+import process from 'node:process';
+import { HttpRequest } from '@azure/functions';
 
-export function getMsDefenderUserJson(request: HttpRequest, conversationId: string, applicationName: string, context: InvocationContext): string {
+export function getMsDefenderUserJson(request: HttpRequest): string {
 
-    const sourceIp = request.headers.get('Remote-Addr') ?? "";
-    const userId = request.headers.get('X-Ms-Client-Principal-Id');
-    const authType = request.headers.get('X-Ms-Client-Principal-Idp');
-
-    context.log("source ip: %s", sourceIp)
-    context.log("conversation id: %s", conversationId)
+    const sourceIp = getSourceIp(request);
+    const authenticatedUserDetails = getAuthenticatedUserDetails(request);
 
     const userObject = {
-        "EndUserId": userId,
-        "EndUserIdType": authType == "aad" ? "EntraId" : authType,
-        "SourceIp": sourceIp.split(':')[0],
-        "SourceRequestHeaders": extractSpecificHeaders(request, context),
-        "ConversationId": conversationId,
-        "ApplicationName": applicationName,
+        "EndUserTenantId": authenticatedUserDetails.get('tenantId'),
+        "EndUserId": authenticatedUserDetails.get('userId'),
+        "EndUserIdType": authenticatedUserDetails.get('identityProvider'),
+        "SourceIp": sourceIp,
+        "SourceRequestHeaders": extractSpecificHeaders(request),
+        "ApplicationName": process.env.APPLICATION_NAME,
     };
 
-    return JSON.stringify(userObject);
+    var userContextJsonString = JSON.stringify(userObject);
+    return userContextJsonString;
 }
 
-function extractSpecificHeaders(request: HttpRequest, context: InvocationContext): any {
+function extractSpecificHeaders(request: HttpRequest): any {
     const headerNames = ['User-Agent', 'X-Forwarded-For', 'Forwarded', 'X-Real-IP', 'True-Client-IP', 'CF-Connecting-IP'];
     var relevantHeaders = new Map<string, string>();
 
-    request.headers.forEach((_, key) => context.log("Found header name %s", key));
-    context.log("request headers: %s", JSON.stringify(request.headers.keys));
-
     for (const header of headerNames) {
         if (request.headers.has(header)) {
-            context.log("found header: %s", header);
             relevantHeaders.set(header, request.headers.get(header)!);
         }
     }
 
-    var entries = Object.fromEntries(relevantHeaders);
-    context.log("found headers: %s", JSON.stringify(entries));
-    return entries;
+    return Object.fromEntries(relevantHeaders);
+}
+
+function getAuthenticatedUserDetails(request: HttpRequest) : Map<string, string> {
+    var authenticatedUserDetails = new Map<string, string>();
+    var principalHeader = request.headers.get('X-Ms-Client-Principal');
+    if (principalHeader == null) {
+        return authenticatedUserDetails;
+    }
+
+    const principal = parsePrincipal(principalHeader);
+    if (principal != null) {
+        var idp = principal['identityProvider'] == "aad" ? "EntraId" : principal['identityProvider'];
+        authenticatedUserDetails.set('identityProvider', idp);
+        authenticatedUserDetails.set('userId', principal['userId']);
+    }
+
+    if (principal['identityProvider'] == "aad" && process.env.AZURE_TENANT_ID != null) {
+        authenticatedUserDetails.set('tenantId', process.env.AZURE_TENANT_ID);
+    }
+
+    return authenticatedUserDetails
+}
+
+function parsePrincipal(principal : string | null) : any {
+    if (principal == null) {
+        return null;
+    }
+
+    try {
+        return JSON.parse(Buffer.from(principal, 'base64').toString('utf-8'));
+    } catch (error) {
+        return null;
+    }
+}
+
+function getSourceIp(request: HttpRequest) {
+    var sourceIp = request.headers.get('X-Forwarded-For') ?? "";
+    return sourceIp.split(',')[0].split(':')[0]
 }
