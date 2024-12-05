@@ -6,6 +6,7 @@ import { AIChatCompletionRequest, AIChatCompletionDelta, AIChatCompletion } from
 import { AzureOpenAI, OpenAI } from "openai";
 import 'dotenv/config';
 import { ChatCompletionChunk } from 'openai/resources';
+import { getMsDefenderUserJson } from "./security/ms-defender-utils"
 
 const azureOpenAiScope = 'https://cognitiveservices.azure.com/.default';
 const systemPrompt = `Assistant helps the user with cooking questions. Be brief in your answers. Answer only plain text, DO NOT use Markdown.
@@ -53,6 +54,13 @@ export async function postChat(stream: boolean, request: HttpRequest, context: I
       throw new Error('No OpenAI API key or Azure OpenAI deployment provided');
     }
 
+    var userContext: string | undefined;
+    if (process.env.MS_DEFENDER_ENABLED) {
+      const applicationName = process.env.APPLICATION_NAME?? "";
+      const conversationId = context?.invocationId;
+      userContext = getMsDefenderUserJson(request, conversationId, applicationName, context);
+    }
+
     if (stream) {
       const responseStream = await openai.chat.completions.create({
         messages: [
@@ -61,7 +69,8 @@ export async function postChat(stream: boolean, request: HttpRequest, context: I
         ],
         temperature: 0.7,
         model,
-        stream: true
+        stream: true,
+        user: userContext,
       });
       const jsonStream = Readable.from(createJsonStream(responseStream));
 
@@ -80,6 +89,7 @@ export async function postChat(stream: boolean, request: HttpRequest, context: I
         ],
         temperature: 0.7,
         model,
+        user: userContext,
       });
 
       return {
