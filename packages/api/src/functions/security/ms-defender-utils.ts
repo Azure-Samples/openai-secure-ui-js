@@ -82,6 +82,23 @@ function parsePrincipal(principal : string | null) : any {
 }
 
 function getSourceIp(request: HttpRequest) {
-    var sourceIp = request.headers.get('X-Forwarded-For') ?? "";
-    return sourceIp.split(',')[0].split(':')[0]
+    const xForwardFor = request.headers.get('X-Forwarded-For');
+    if (xForwardFor == null) {
+        return null;
+    }
+
+    const ip = xForwardFor.split(',')[0];
+    const colonIndex = ip.lastIndexOf(':');
+
+    // case of ipv4
+    if (colonIndex !== -1 && ip.indexOf(':') === colonIndex) {
+        return ip.substring(0, colonIndex);
+    }
+
+    // case of ipv6
+    if (ip.startsWith('[') && ip.includes(']:')) {
+        return ip.substring(0, ip.indexOf(']:') + 1);
+    }
+
+    return ip;
 }
