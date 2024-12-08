@@ -37,12 +37,6 @@
     },
     "isContinuousDeployment": {
       "value": "${CI=false}"
-    },
-    "isMicrosoftDefenderEnabled": {
-      "value": "${MS_DEFENDER_ENABLED=false}"
-    },
-    "applicationName": {
-      "value": "${APPLICATION_NAME=OpenAI Application}"
     }
   }
 }

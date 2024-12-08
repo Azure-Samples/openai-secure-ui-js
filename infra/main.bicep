@@ -60,9 +60,6 @@ param principalId string = ''
 // Differentiates between automated and manual deployments
 param isContinuousDeployment bool // Set in main.parameters.json
 
-param isMicrosoftDefenderEnabled bool // Set in main.parameters.json
-param applicationName string // Set in main.parameters.json
-
 var abbrs = loadJsonContent('abbreviations.json')
 var resourceToken = toLower(uniqueString(subscription().id, environmentName, location))
 var tags = { 'azd-env-name': environmentName }
@@ -276,6 +273,4 @@ output OPENAI_API_VERSION string = useAzureOpenAi ? openAiApiVersion : ''
 output OPENAI_MODEL_NAME string = chatModelName
 
 output WEBAPP_URL string = webapp.outputs.uri
-output MS_DEFENDER_ENABLED bool = isMicrosoftDefenderEnabled
-output APPLICATION_NAME string = applicationName
 
