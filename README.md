@@ -115,15 +115,18 @@ There are multiple ways to run this sample: locally using Ollama or Azure OpenAI
 See the [cost estimation](./docs/cost.md) details for running this sample on Azure.
 
 #### (Optional) Enable additional user context to Microsoft Defender for Cloud
-In case you have Microsoft Defender for Cloud protection on your Azure OpenAI resource and you want to have additional context on the alerts, run this command:
+In case you have Microsoft Defender for Cloud protection on your Azure OpenAI resource and you want to have additional user context on the alerts, run this command:
+
 ```bash
 azd env set MS_DEFENDER_ENABLED true
 ```
 
-To customize the application name of the context, run this command:
+To customize the application name of the user context, run this command:
 ```bash
 azd env set APPLICATION_NAME <your application name>
 ```
+
+For more details, refer to the [Microsoft Defender for Cloud documentation](https://learn.microsoft.com/en-us/azure/defender-for-cloud/gain-end-user-context-ai).
 
 #### Deploy the sample
 
