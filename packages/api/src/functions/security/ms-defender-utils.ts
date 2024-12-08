@@ -1,6 +1,13 @@
 import process from 'node:process';
 import { HttpRequest } from '@azure/functions';
 
+/**
+ * Generates the user security context which contains several parameters that describe the AI application itself, and the end user that interacts with the AI application.
+ * These fields assist your security operations teams to investigate and mitigate security incidents by providing a comprehensive approach to protecting your AI applications.
+ * [Learn more](https://learn.microsoft.com/en-us/azure/defender-for-cloud/gain-end-user-context-ai) about protecting AI applications using Microsoft Defender for Cloud.
+ * @param request - The HTTP request
+ * @returns A json string which represents the user context
+ */
 export function getMsDefenderUserJson(request: HttpRequest): string {
 
     const sourceIp = getSourceIp(request);
