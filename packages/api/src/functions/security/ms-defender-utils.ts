@@ -43,11 +43,14 @@ function getAuthenticatedUserDetails(request: HttpRequest) : Map<string, string>
     if (principal != null) {
         var idp = principal['identityProvider'] == "aad" ? "EntraId" : principal['identityProvider'];
         authenticatedUserDetails.set('identityProvider', idp);
-        authenticatedUserDetails.set('userId', principal['userId']);
     }
 
-    if (principal['identityProvider'] == "aad" && process.env.AZURE_TENANT_ID != null) {
-        authenticatedUserDetails.set('tenantId', process.env.AZURE_TENANT_ID);
+    if (principal['identityProvider'] == "aad") {
+        // TODO: add only when userId represents actual IDP user id 
+        // authenticatedUserDetails.set('userId', principal['userId']);
+        if (process.env.AZURE_TENANT_ID != null) {
+            authenticatedUserDetails.set('tenantId', process.env.AZURE_TENANT_ID);
+        }
     }
 
     return authenticatedUserDetails
