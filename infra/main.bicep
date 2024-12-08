@@ -273,4 +273,3 @@ output OPENAI_API_VERSION string = useAzureOpenAi ? openAiApiVersion : ''
 output OPENAI_MODEL_NAME string = chatModelName
 
 output WEBAPP_URL string = webapp.outputs.uri
-
