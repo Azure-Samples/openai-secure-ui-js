@@ -39,6 +39,12 @@ function extractSpecificHeaders(request: HttpRequest): any {
     return Object.fromEntries(relevantHeaders);
 }
 
+/**
+ * Extracts user authentication details from the 'X-Ms-Client-Principal' header.
+ * This is based on [Azure Static Web App documentation](https://learn.microsoft.com/en-us/azure/static-web-apps/user-information)
+ * @param request - The HTTP request
+ * @returns A dictionary containing authentication details of the user
+ */
 function getAuthenticatedUserDetails(request: HttpRequest) : Map<string, string> {
     var authenticatedUserDetails = new Map<string, string>();
     var principalHeader = request.headers.get('X-Ms-Client-Principal');
