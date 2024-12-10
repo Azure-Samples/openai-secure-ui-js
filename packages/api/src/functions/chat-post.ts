@@ -1,11 +1,15 @@
 import process from 'node:process';
 import { Readable } from 'node:stream';
 import { DefaultAzureCredential, getBearerTokenProvider } from '@azure/identity';
-import { HttpRequest, InvocationContext, HttpResponseInit, app } from '@azure/functions';
-import { AIChatCompletionRequest, AIChatCompletionDelta, AIChatCompletion } from '@microsoft/ai-chat-protocol';
-import { AzureOpenAI, OpenAI } from "openai";
+import { type HttpRequest, type InvocationContext, type HttpResponseInit, app } from '@azure/functions';
+import {
+  type AIChatCompletionRequest,
+  type AIChatCompletionDelta,
+  type AIChatCompletion,
+} from '@microsoft/ai-chat-protocol';
+import { AzureOpenAI, OpenAI } from 'openai';
 import 'dotenv/config';
-import { ChatCompletionChunk } from 'openai/resources';
+import { type ChatCompletionChunk } from 'openai/resources';
 
 const azureOpenAiScope = 'https://cognitiveservices.azure.com/.default';
 const systemPrompt = `Assistant helps the user with cooking questions. Be brief in your answers. Answer only plain text, DO NOT use Markdown.
@@ -20,7 +24,11 @@ Do no repeat questions that have already been asked.
 Make sure the last question ends with ">>".
 `;
 
-export async function postChat(stream: boolean, request: HttpRequest, context: InvocationContext): Promise<HttpResponseInit> {
+export async function postChat(
+  stream: boolean,
+  request: HttpRequest,
+  context: InvocationContext,
+): Promise<HttpResponseInit> {
   try {
     const requestBody = (await request.json()) as AIChatCompletionRequest;
     const { messages } = requestBody;
@@ -55,13 +63,10 @@ export async function postChat(stream: boolean, request: HttpRequest, context: I
 
     if (stream) {
       const responseStream = await openai.chat.completions.create({
-        messages: [
-          { role: 'system', content: systemPrompt},
-          ...messages,
-        ],
+        messages: [{ role: 'system', content: systemPrompt }, ...messages],
         temperature: 0.7,
         model,
-        stream: true
+        stream: true,
       });
       const jsonStream = Readable.from(createJsonStream(responseStream));
 
@@ -72,25 +77,22 @@ export async function postChat(stream: boolean, request: HttpRequest, context: I
         },
         body: jsonStream,
       };
-    } else {
-      const response = await openai.chat.completions.create({
-        messages: [
-          { role: 'system', content: systemPrompt},
-          ...messages,
-        ],
-        temperature: 0.7,
-        model,
-      });
-
-      return {
-        jsonBody: {
-          message: {
-            content: response.choices[0].message.content,
-            role: 'assistant',
-          },
-        } as AIChatCompletion,
-      };
     }
+
+    const response = await openai.chat.completions.create({
+      messages: [{ role: 'system', content: systemPrompt }, ...messages],
+      temperature: 0.7,
+      model,
+    });
+
+    return {
+      jsonBody: {
+        message: {
+          content: response.choices[0].message.content,
+          role: 'assistant',
+        },
+      } as AIChatCompletion,
+    };
   } catch (_error: unknown) {
     const error = _error as Error;
     context.error(`Error when processing chat-post request: ${error.message}`);
