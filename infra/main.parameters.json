@@ -24,10 +24,10 @@
       "value": "${AZURE_OPENAI_API_VERSION=2024-02-01}"
     },
     "chatModelName": {
-      "value": "${AZURE_OPENAI_API_MODEL=gpt-35-turbo}"
+      "value": "${AZURE_OPENAI_API_MODEL=gpt-4o-mini}"
     },
     "chatModelVersion": {
-      "value": "${AZURE_OPENAI_API_MODEL_VERSION=0613}"
+      "value": "${AZURE_OPENAI_API_MODEL_VERSION=2024-07-18}"
     },
     "webappLocation": {
       "value": "${AZURE_WEBAPP_LOCATION=eastus2}"

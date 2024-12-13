@@ -227,7 +227,7 @@ You can find answers to frequently asked questions in the [FAQ](./docs/faq.md).
 
 ### Region availability
 
-This template uses model `gpt-35-turbo (0613)` which may not be available in all Azure regions. Check for [up-to-date region availability](https://learn.microsoft.com/azure/ai-services/openai/concepts/models#standard-deployment-model-availability) and select a region during deployment accordingly.
+This template uses model `gpt-4o-mini` which may not be available in all Azure regions. Check for [up-to-date region availability](https://learn.microsoft.com/azure/ai-services/openai/concepts/models#standard-deployment-model-availability) and select a region during deployment accordingly.
 
 We recommend using `East US 2` if you're unsure of which region to choose.
 

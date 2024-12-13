@@ -9,7 +9,7 @@ param environmentName string
 @description('Primary location for all resources')
 // Flex Consumption functions are only supported in these regions.
 // Run `az functionapp list-flexconsumption-locations --output table` to get the latest list
-@allowed(['northeurope', 'southeastasia', 'eastasia', 'eastus2', 'southcentralus', 'australiaeast', 'eastus', 'northcentralus(stage)', 'westus2', 'uksouth', 'eastus2euap', 'westus3', 'swedencentral'])
+@allowed(['northeurope', 'southeastasia', 'eastasia', 'eastus2', 'southcentralus', 'australiaeast', 'eastus', 'westus2', 'uksouth', 'eastus2euap', 'westus3', 'swedencentral'])
 @metadata({
   azd: {
     type: 'location'
@@ -205,7 +205,7 @@ module openAi 'core/ai/cognitiveservices.bicep' = if (useAzureOpenAi) {
           version: chatModelVersion
         }
         sku: {
-          name: 'Standard'
+          name: 'GlobalStandard'
           capacity: chatDeploymentCapacity
         }
       }
