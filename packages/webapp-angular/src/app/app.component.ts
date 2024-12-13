@@ -1,14 +1,12 @@
 import { CUSTOM_ELEMENTS_SCHEMA, Component } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { RouterOutlet } from '@angular/router';
 import '@azure/ai-chat-components';
 
 @Component({
-  selector: 'app-root',
-  standalone: true,
-  imports: [CommonModule, RouterOutlet],
-  schemas: [CUSTOM_ELEMENTS_SCHEMA],
-  template: `
+    selector: 'app-root',
+    imports: [CommonModule],
+    schemas: [CUSTOM_ELEMENTS_SCHEMA],
+    template: `
     <nav>
       <div class="container">
         <img class="logo" src="./favicon.png" alt="AI Chat logo" width="36" height="36" />
@@ -23,8 +21,8 @@ import '@azure/ai-chat-components';
       </azc-auth>
     </div>
   `,
-  styles: [
-    `
+    styles: [
+        `
       nav {
         background: #333;
         color: #fff;
@@ -58,6 +56,6 @@ import '@azure/ai-chat-components';
         font-size: 16px;
       }
     `,
-  ],
+    ]
 })
 export class AppComponent {}
