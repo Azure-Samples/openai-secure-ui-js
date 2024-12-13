@@ -14,13 +14,14 @@
   },
   "dependencies": {
     "@azure/ai-chat-components": "*",
-    "react": "^19.0.0",
-    "react-dom": "^19.0.0"
+    "@lit/react": "^1.0.6",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1"
   },
   "devDependencies": {
     "@eslint/js": "^9.11.1",
-    "@types/react": "^19.0.1",
-    "@types/react-dom": "^19.0.2",
+    "@types/react": "^18.3.16",
+    "@types/react-dom": "^18.3.5",
     "@vitejs/plugin-react": "^4.3.1",
     "eslint": "^9.11.1",
     "eslint-plugin-react-hooks": "^5.1.0-rc.0",

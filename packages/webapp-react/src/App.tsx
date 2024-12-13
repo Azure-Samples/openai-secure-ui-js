@@ -1,5 +1,10 @@
+import React from 'react';
 import './App.css';
-import '@azure/ai-chat-components';
+import { AuthComponent, ChatComponent } from '@azure/ai-chat-components';
+import { createComponent } from '@lit/react';
+
+const Auth = createComponent({ tagName: 'azc-auth', elementClass: AuthComponent, react: React });
+const Chat = createComponent({ tagName: 'azc-chat', elementClass: ChatComponent, react: React });
 
 function App() {
   return (
@@ -9,13 +14,13 @@ function App() {
           <img className="logo" src="./favicon.png" alt="AI Chat logo" width="36" height="36" />
           AI Chat
           <div className="spacer"></div>
-          <azc-auth type="status"></azc-auth>
+          <Auth type="status"/>
         </div>
       </nav>
       <div className="container">
-        <azc-auth>
-          <azc-chat></azc-chat>
-        </azc-auth>
+        <Auth>
+          <Chat/>
+        </Auth>
       </div>
     </>
   );
