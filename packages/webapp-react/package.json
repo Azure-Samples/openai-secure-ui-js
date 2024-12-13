@@ -13,6 +13,7 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "@azure/ai-chat-components": "*",
     "react": "^19.0.0",
     "react-dom": "^19.0.0"
   },
