@@ -28,8 +28,7 @@
         "name": "ts-lit-plugin",
         "strict": true
       }
-    ],
-    "types": []
+    ]
   },
   "include": ["src/**/*.ts"],
 }
