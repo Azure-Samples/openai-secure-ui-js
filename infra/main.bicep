@@ -9,7 +9,20 @@ param environmentName string
 @description('Primary location for all resources')
 // Flex Consumption functions are only supported in these regions.
 // Run `az functionapp list-flexconsumption-locations --output table` to get the latest list
-@allowed(['northeurope', 'southeastasia', 'eastasia', 'eastus2', 'southcentralus', 'australiaeast', 'eastus', 'westus2', 'uksouth', 'eastus2euap', 'westus3', 'swedencentral'])
+@allowed([
+  'northeurope'
+  'southeastasia'
+  'eastasia'
+  'eastus2'
+  'southcentralus'
+  'australiaeast'
+  'eastus'
+  'westus2'
+  'uksouth'
+  'eastus2euap'
+  'westus3'
+  'swedencentral'
+])
 @metadata({
   azd: {
     type: 'location'
@@ -20,18 +33,27 @@ param location string
 param resourceGroupName string = ''
 param webappName string = 'webapp'
 param apiServiceName string = 'api'
-param appServicePlanName string = ''
-param storageAccountName string = ''
 
 @description('Location for the OpenAI resource group')
-@allowed(['australiaeast', 'canadaeast', 'eastus', 'eastus2', 'francecentral', 'japaneast', 'northcentralus', 'swedencentral', 'switzerlandnorth', 'uksouth', 'westeurope'])
+@allowed([
+  'australiaeast'
+  'canadaeast'
+  'eastus'
+  'eastus2'
+  'francecentral'
+  'japaneast'
+  'northcentralus'
+  'swedencentral'
+  'switzerlandnorth'
+  'uksouth'
+  'westeurope'
+])
 @metadata({
   azd: {
     type: 'location'
   }
 })
 param openAiLocation string // Set in main.parameters.json
-param openAiSkuName string = 'S0'
 param openAiApiVersion string // Set in main.parameters.json
 
 @secure()
@@ -58,16 +80,23 @@ param chatDeploymentCapacity int = 15
 param principalId string = ''
 
 // Differentiates between automated and manual deployments
-param isContinuousDeployment bool // Set in main.parameters.json
+param isContinuousIntegration bool // Set in main.parameters.json
+
+// ---------------------------------------------------------------------------
+// Common variables
 
 var abbrs = loadJsonContent('abbreviations.json')
 var resourceToken = toLower(uniqueString(subscription().id, environmentName, location))
 var tags = { 'azd-env-name': environmentName }
+var principalType = isContinuousIntegration ? 'ServicePrincipal' : 'User'
 var openAiUrl = 'https://${openAi.outputs.name}.openai.azure.com'
 var apiResourceName = '${abbrs.webSitesFunctions}api-${resourceToken}'
+var storageAccountName = '${abbrs.storageStorageAccounts}${resourceToken}'
 var useAzureOpenAi = empty(openAiApiKey)
 
-// Organize resources in a resource group
+// ---------------------------------------------------------------------------
+// Resources
+
 resource resourceGroup 'Microsoft.Resources/resourceGroups@2021-04-01' = {
   name: !empty(resourceGroupName) ? resourceGroupName : '${abbrs.resourcesResourceGroups}${environmentName}'
   location: location
@@ -75,127 +104,176 @@ resource resourceGroup 'Microsoft.Resources/resourceGroups@2021-04-01' = {
 }
 
 // The application webapp
-module webapp './core/host/staticwebapp.bicep' = {
+module webapp 'br/public:avm/res/web/static-site:0.7.0' = {
   name: 'webapp'
   scope: resourceGroup
   params: {
-    name: !empty(webappName) ? webappName : '${abbrs.webStaticSites}web-${resourceToken}'
+    name: webappName
     location: webappLocation
     tags: union(tags, { 'azd-service-name': webappName })
-    sku: {
-      name: 'Standard'
-      tier: 'Standard'
-    }
+    sku: 'Standard'
+  }
+}
+// Need to declare the linked backend module separately to avoid circular dependencies
+module linkedBackend './app/linked-backend.bicep' = {
+  name: 'linkedBackend'
+  scope: resourceGroup
+  params: {
+    staticWebAppName: webappName
+    backendResourceId: function.outputs.resourceId
+    backendLocation: location
   }
 }
 
 // The application backend API
-module api './app/api.bicep' = {
+module function 'br/public:avm/res/web/site:0.13.0' = {
   name: 'api'
   scope: resourceGroup
   params: {
-    name: apiResourceName
-    location: location
     tags: union(tags, { 'azd-service-name': apiServiceName })
-    appServicePlanId: appServicePlan.outputs.id
-    allowedOrigins: [webapp.outputs.uri]
-    storageAccountName: storage.outputs.name
-    applicationInsightsName: monitoring.outputs.applicationInsightsName
-    virtualNetworkSubnetId: vnet.outputs.appSubnetID
-    staticWebAppName: webapp.outputs.name
-    appSettings: {
-      APPINSIGHTS_INSTRUMENTATIONKEY: monitoring.outputs.applicationInsightsInstrumentationKey
+    location: location
+    kind: 'functionapp,linux'
+    name: apiResourceName
+    serverFarmResourceId: appServicePlan.outputs.resourceId
+    appInsightResourceId: monitoring.outputs.applicationInsightsResourceId
+    managedIdentities: { systemAssigned: true }
+    appSettingsKeyValuePairs: {
       AZURE_OPENAI_API_INSTANCE_NAME: useAzureOpenAi ? openAi.outputs.name : ''
       AZURE_OPENAI_API_ENDPOINT: useAzureOpenAi ? openAiUrl : ''
       AZURE_OPENAI_API_VERSION: useAzureOpenAi ? openAiApiVersion : ''
       AZURE_OPENAI_API_DEPLOYMENT_NAME: useAzureOpenAi ? chatDeploymentName : ''
       OPENAI_API_KEY: useAzureOpenAi ? '' : openAiApiKey
       OPENAI_MODEL_NAME: useAzureOpenAi ? '' : chatModelName
-     }
+    }
+    siteConfig: {
+      minTlsVersion: '1.2'
+      ftpsState: 'FtpsOnly'
+      cors: {
+        allowedOrigins: [ 'https://portal.azure.com', 'https://ms.portal.azure.com', webapp.outputs.defaultHostname]
+      }
+    }
+    functionAppConfig: {
+      deployment: {
+        storage: {
+          type: 'blobContainer'
+          value: '${storage.outputs.primaryBlobEndpoint}${apiResourceName}'
+          authentication: {
+            type: 'SystemAssignedIdentity'
+          }
+        }
+      }
+      scaleAndConcurrency: {
+        maximumInstanceCount: 800
+        instanceMemoryMB: 2048
+      }
+      runtime: {
+        name: 'node'
+        version: '20'
+      }
+    }
+    storageAccountResourceId: storage.outputs.resourceId
+    storageAccountUseIdentityAuthentication: true
+    virtualNetworkSubnetId: vnet.outputs.subnetResourceIds[0]
   }
   dependsOn: useAzureOpenAi ? [openAi] : []
 }
 
 // Compute plan for the Azure Functions API
-module appServicePlan './core/host/appserviceplan.bicep' = {
+module appServicePlan 'br/public:avm/res/web/serverfarm:0.4.1' = {
   name: 'appserviceplan'
   scope: resourceGroup
   params: {
-    name: !empty(appServicePlanName) ? appServicePlanName : '${abbrs.webServerFarms}${resourceToken}'
-    location: location
+    name: '${abbrs.webServerFarms}${resourceToken}'
     tags: tags
-    sku: {
-      name: 'FC1'
-      tier: 'FlexConsumption'
-    }
+    location: location
+    skuName: 'FC1'
     reserved: true
   }
 }
 
 // Storage for Azure Functions API and Blob storage
-module storage './core/storage/storage-account.bicep' = {
+module storage 'br/public:avm/res/storage/storage-account:0.15.0' = {
   name: 'storage'
   scope: resourceGroup
   params: {
-    name: !empty(storageAccountName) ? storageAccountName : '${abbrs.storageStorageAccounts}${resourceToken}'
-    location: location
+    name: storageAccountName
     tags: tags
-    allowBlobPublicAccess: false
+    location: location
+    skuName: 'Standard_LRS'
     allowSharedKeyAccess: false
-    containers: [
-      // Deployment storage container
-      {
-        name: apiResourceName
-      }
-    ]
     networkAcls: {
       defaultAction: 'Deny'
       bypass: 'AzureServices'
       virtualNetworkRules: [
         {
-          id: vnet.outputs.appSubnetID
+          id: vnet.outputs.subnetResourceIds[0]
           action: 'Allow'
         }
       ]
     }
+    blobServices: {
+      containers: [
+        {
+          name: apiResourceName
+        }
+      ]
+    }
+    roleAssignments: [
+      {
+        principalId: principalId
+        principalType: principalType
+        roleDefinitionIdOrName: 'Storage Blob Data Contributor'
+      }
+    ]
   }
 }
 
 // Virtual network for Azure Functions API
-module vnet './app/vnet.bicep' = {
+module vnet 'br/public:avm/res/network/virtual-network:0.5.2' = {
   name: 'vnet'
   scope: resourceGroup
   params: {
     name: '${abbrs.networkVirtualNetworks}${resourceToken}'
     location: location
     tags: tags
+    addressPrefixes: ['10.0.0.0/16']
+    subnets: [
+      {
+        name: 'app'
+        addressPrefix: '10.0.1.0/24'
+        delegation: 'Microsoft.App/environments'
+        serviceEndpoints: ['Microsoft.Storage']
+        privateEndpointNetworkPolicies: 'Disabled'
+        privateLinkServiceNetworkPolicies: 'Enabled'
+      }
+    ]
   }
 }
 
 // Monitor application with Azure Monitor
-module monitoring './core/monitor/monitoring.bicep' = {
+module monitoring 'br/public:avm/ptn/azd/monitoring:0.1.1' = {
   name: 'monitoring'
   scope: resourceGroup
   params: {
-    location: location
     tags: tags
-    logAnalyticsName: '${abbrs.operationalInsightsWorkspaces}${resourceToken}'
+    location: location
     applicationInsightsName: '${abbrs.insightsComponents}${resourceToken}'
     applicationInsightsDashboardName: '${abbrs.portalDashboards}${resourceToken}'
+    logAnalyticsName: '${abbrs.operationalInsightsWorkspaces}${resourceToken}'
   }
 }
 
-module openAi 'core/ai/cognitiveservices.bicep' = if (useAzureOpenAi) {
+module openAi 'br/public:avm/res/cognitive-services/account:0.9.2' = if (useAzureOpenAi) {
   name: 'openai'
   scope: resourceGroup
   params: {
     name: '${abbrs.cognitiveServicesAccounts}${resourceToken}'
     location: openAiLocation
     tags: tags
-    sku: {
-      name: openAiSkuName
-    }
-    disableLocalAuth: true
+    kind: 'OpenAI'
+    customSubDomainName: '${abbrs.cognitiveServicesAccounts}${resourceToken}'
+    publicNetworkAccess: 'Enabled'
+    sku: 'S0'
     deployments: [
       {
         name: chatDeploymentName
@@ -210,55 +288,40 @@ module openAi 'core/ai/cognitiveservices.bicep' = if (useAzureOpenAi) {
         }
       }
     ]
+    disableLocalAuth: true
+    roleAssignments: [
+      {
+        principalId: principalId
+        principalType: principalType
+        roleDefinitionIdOrName: 'Cognitive Services OpenAI User'
+      }
+    ]
   }
 }
 
-// Managed identity roles assignation
+
 // ---------------------------------------------------------------------------
+// System roles assignation
 
-// User roles
-module openAiRoleUser 'core/security/role.bicep' = if (!isContinuousDeployment) {
-  scope: resourceGroup
-  name: 'openai-role-user'
-  params: {
-    principalId: principalId
-    // Cognitive Services OpenAI User
-    roleDefinitionId: '5e0bd9bd-7b93-4f28-af87-19fc36ad61bd'
-    principalType: 'User'
-  }
-}
-
-module storageRoleUser 'core/security/role.bicep' = if (!isContinuousDeployment) {
-  scope: resourceGroup
-  name: 'storage-contrib-role-user'
-  params: {
-    principalId: principalId
-    // Storage Blob Data Contributor
-    roleDefinitionId: 'ba92f5b4-2d11-453d-a403-e96b0029c9fe'
-    principalType: 'User'
-  }
-}
-
-// System roles
-module openAiRoleApi 'core/security/role.bicep' = {
+module openAiRoleApi 'br/public:avm/ptn/authorization/resource-role-assignment:0.1.2' = {
   scope: resourceGroup
   name: 'openai-role-api'
   params: {
-    principalId: api.outputs.identityPrincipalId
-    // Cognitive Services OpenAI User
+    principalId: function.outputs.systemAssignedMIPrincipalId
+    roleName: 'Cognitive Services User'
     roleDefinitionId: '5e0bd9bd-7b93-4f28-af87-19fc36ad61bd'
-    principalType: 'ServicePrincipal'
+    resourceId: openAi.outputs.resourceId
   }
 }
 
-module storageRoleApi 'core/security/role.bicep' = {
+module storageRoleApi 'br/public:avm/ptn/authorization/resource-role-assignment:0.1.2' = {
   scope: resourceGroup
   name: 'storage-role-api'
   params: {
-    principalId: api.outputs.identityPrincipalId
-    // Storage Blob Data Contributor
-    roleDefinitionId: 'ba92f5b4-2d11-453d-a403-e96b0029c9fe'
-    principalType: 'ServicePrincipal'
+    principalId: function.outputs.systemAssignedMIPrincipalId
+    roleName: 'Storage Blob Data Contributor'
+    roleDefinitionId: 'b7e6dc6d-f1e8-4753-8033-0f276bb0955b'
+    resourceId: storage.outputs.resourceId
   }
 }
 
@@ -272,4 +335,4 @@ output AZURE_OPENAI_API_DEPLOYMENT_NAME string = useAzureOpenAi ? chatDeployment
 output OPENAI_API_VERSION string = useAzureOpenAi ? openAiApiVersion : ''
 output OPENAI_MODEL_NAME string = chatModelName
 
-output WEBAPP_URL string = webapp.outputs.uri
+output WEBAPP_URL string = webapp.outputs.defaultHostname
