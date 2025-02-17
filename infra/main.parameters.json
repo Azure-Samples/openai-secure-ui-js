@@ -35,7 +35,7 @@
     "apiLocation": {
       "value": "${AZURE_API_LOCATION=eastus2}"
     },
-    "isContinuousDeployment": {
+    "isContinuousIntegration": {
       "value": "${CI=false}"
     }
   }
