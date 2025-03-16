@@ -10,7 +10,7 @@ import {
 import { AzureOpenAI, OpenAI } from 'openai';
 import 'dotenv/config';
 import { type ChatCompletionChunk } from 'openai/resources';
-import { getMsDefenderUserJson } from './security/ms-defender-utils.js';
+import { getMsDefenderUserJson, type UserSecurityContext } from './security/ms-defender-utils.js';
 
 const azureOpenAiScope = 'https://cognitiveservices.azure.com/.default';
 const systemPrompt = `Assistant helps the user with cooking questions. Be brief in your answers. Answer only plain text, DO NOT use Markdown.
@@ -62,9 +62,9 @@ export async function postChat(
       throw new Error('No OpenAI API key or Azure OpenAI deployment provided');
     }
 
-    let userContext: string | undefined;
+    let userSecurityContext: UserSecurityContext | undefined;
     if (process.env.MS_DEFENDER_ENABLED) {
-      userContext = getMsDefenderUserJson(request);
+      userSecurityContext = getMsDefenderUserJson(request);
     }
 
     if (stream) {
@@ -73,7 +73,7 @@ export async function postChat(
         temperature: 0.7,
         model,
         stream: true,
-        user: userContext,
+        user_security_context: userSecurityContext,
       });
       const jsonStream = Readable.from(createJsonStream(responseStream));
 
@@ -90,7 +90,7 @@ export async function postChat(
       messages: [{ role: 'system', content: systemPrompt }, ...messages],
       temperature: 0.7,
       model,
-      user: userContext,
+      user_security_context: userSecurityContext,
     });
 
     return {
