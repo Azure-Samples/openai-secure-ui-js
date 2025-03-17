@@ -68,7 +68,7 @@ export async function postChat(
     }
 
     if (stream) {
-      // @ts-ignore
+      // @ts-expect-error user_security_context field is unsupported via openai client
       const responseStream = await openai.chat.completions.create({
         messages: [{ role: 'system', content: systemPrompt }, ...messages],
         temperature: 0.7,
@@ -91,7 +91,7 @@ export async function postChat(
       messages: [{ role: 'system', content: systemPrompt }, ...messages],
       temperature: 0.7,
       model,
-      // @ts-ignore
+      // @ts-expect-error user_security_context field is unsupported via openai client
       user_security_context: userSecurityContext,
     });
 
