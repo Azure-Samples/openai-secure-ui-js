@@ -10,6 +10,7 @@ import {
 import { AzureOpenAI, OpenAI } from 'openai';
 import 'dotenv/config';
 import { type ChatCompletionChunk } from 'openai/resources';
+import { getMsDefenderUserJson, type UserSecurityContext } from './security/ms-defender-utils.js';
 
 const azureOpenAiScope = 'https://cognitiveservices.azure.com/.default';
 const systemPrompt = `Assistant helps the user with cooking questions. Be brief in your answers. Answer only plain text, DO NOT use Markdown.
@@ -61,12 +62,19 @@ export async function postChat(
       throw new Error('No OpenAI API key or Azure OpenAI deployment provided');
     }
 
+    let userSecurityContext: UserSecurityContext | undefined;
+    if (process.env.MS_DEFENDER_ENABLED) {
+      userSecurityContext = getMsDefenderUserJson(request);
+    }
+
     if (stream) {
+      // @ts-expect-error user_security_context field is unsupported via openai client
       const responseStream = await openai.chat.completions.create({
         messages: [{ role: 'system', content: systemPrompt }, ...messages],
         temperature: 0.7,
         model,
         stream: true,
+        user_security_context: userSecurityContext,
       });
       const jsonStream = Readable.from(createJsonStream(responseStream));
 
@@ -83,6 +91,8 @@ export async function postChat(
       messages: [{ role: 'system', content: systemPrompt }, ...messages],
       temperature: 0.7,
       model,
+      // @ts-expect-error user_security_context field is unsupported via openai client
+      user_security_context: userSecurityContext,
     });
 
     return {
