@@ -30,9 +30,85 @@ Building AI applications can be complex and time-consuming, but using accelerato
   <img src="./docs/images/architecture-secure.drawio.png" alt="Application architecture" width="640px" />
 </div>
 
-[¡NOTE]I changed this repo's architecture based security best practice.
+> [!NOTE]
+> **This template's architecture was updated to follow storage network-security best practices.**
+> The Function App's deployment storage account now has **public network access disabled** and is
+> reached exclusively through **private endpoints** (blob, queue, and table) inside the virtual
+> network, with matching **private DNS zones**. This satisfies the common enterprise Azure Policy
+> _"Storage accounts should disable public network access"_ (which is enforced as a **Deny** in many
+> governed subscriptions), so no keys or public storage endpoints are exposed. The trade-off is that
+> `azd deploy api` must run from a client **inside the VNet** — see
+> [Deploying in a network-restricted (governed) subscription](#deploying-in-a-network-restricted-governed-subscription).
 
+#### Previous architecture (before the change)
 
+Previously, the deployment storage account had **public network access enabled** (allowed via a
+service-endpoint VNet rule), so the Function App could reach it over its public endpoint and
+`azd deploy api` worked from anywhere — including Azure Cloud Shell. This is simpler, but it is
+**rejected by the "Storage accounts should disable public network access" Deny policy** used in
+many governed subscriptions.
+
+```mermaid
+flowchart LR
+    user([User browser])
+
+    subgraph swa[Azure Static Web Apps]
+        webapp[Web app + Easy Auth]
+    end
+
+    subgraph vnet[Virtual Network]
+        subgraph appsubnet[app subnet]
+            func[Function App API<br/>Flex Consumption<br/>VNet-integrated]
+        end
+    end
+
+    storage[[Storage account<br/>public access ENABLED<br/>service-endpoint rule]]
+    openai[Azure OpenAI<br/>AI Services]
+    monitor[Application Insights<br/>+ Log Analytics]
+
+    user -->|HTTPS| webapp
+    webapp -->|HTTP chat protocol<br/>linked backend| func
+    func -->|Managed Identity<br/>keyless| openai
+    func -->|public endpoint| storage
+    func -.telemetry.-> monitor
+```
+
+#### Updated architecture (after the change)
+
+The updated secure architecture looks like this:
+
+```mermaid
+flowchart LR
+    user([User browser])
+
+    subgraph swa[Azure Static Web Apps]
+        webapp[Web app + Easy Auth]
+    end
+
+    subgraph vnet[Virtual Network]
+        direction TB
+        subgraph appsubnet[app subnet]
+            func[Function App API<br/>Flex Consumption<br/>VNet-integrated]
+        end
+        subgraph pesubnet[private-endpoints subnet]
+            peBlob[(PE: blob)]
+            peQueue[(PE: queue)]
+            peTable[(PE: table)]
+        end
+    end
+
+    storage[[Storage account<br/>public access DISABLED]]
+    openai[Azure OpenAI<br/>AI Services]
+    monitor[Application Insights<br/>+ Log Analytics]
+
+    user -->|HTTPS| webapp
+    webapp -->|HTTP chat protocol<br/>linked backend| func
+    func -->|Managed Identity<br/>keyless| openai
+    func -->|private DNS| peBlob --> storage
+    func --> peQueue --> storage
+    func --> peTable --> storage
+    func -.telemetry.-> monitor
+```
 
 This application is made from multiple components:
 
@@ -324,6 +400,31 @@ This design satisfies the common enterprise Azure Policy
 `b2982f36-99f2-4db5-8eff-283140c09693`), which is assigned as a **Deny** in many corporate
 subscriptions. Because of this, you **cannot** simply enable public access on the storage
 account — the policy will reject it.
+
+#### Why three private endpoints (blob, queue, and table)?
+
+A storage account exposes each service on its **own hostname and private-link sub-resource**, and
+a single private endpoint only covers **one** service (`groupId`). When public access is disabled,
+any service **without** a private endpoint stops resolving to a private IP and becomes unreachable:
+
+| Service | Hostname | Private DNS zone |
+| --- | --- | --- |
+| Blob | `<account>.blob.core.windows.net` | `privatelink.blob.core.windows.net` |
+| Queue | `<account>.queue.core.windows.net` | `privatelink.queue.core.windows.net` |
+| Table | `<account>.table.core.windows.net` | `privatelink.table.core.windows.net` |
+
+Azure Functions on the **Flex Consumption** plan uses all three services on this account:
+
+- **Blob** — holds the **deployment package** (`azd deploy api` uploads here) and is used by
+  `AzureWebJobsStorage` for the host's internal state.
+- **Queue** — used by the Functions host/runtime for internal coordination and by queue-based triggers.
+- **Table** — used by the host for metadata/state (e.g. trigger receipts and lease/partition tracking).
+
+If you only create the blob private endpoint, provisioning may appear to succeed but the host can
+intermittently fail to start or run because it can't reach queue/table. Creating all three (plus
+their DNS zones) is the supported "secure by default" configuration. For details, see Microsoft's
+[Azure Functions networking options — restrict your storage account to a virtual network](https://learn.microsoft.com/azure/azure-functions/functions-networking-options#restrict-your-storage-account-to-a-virtual-network)
+and [Flex Consumption plan networking](https://learn.microsoft.com/azure/azure-functions/flex-consumption-plan#networking).
 
 **What this means for deployment:** `azd deploy api` uploads the app package to the
 deployment storage account. Since that account is private-endpoint-only, the upload must
