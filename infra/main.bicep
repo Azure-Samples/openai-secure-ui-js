@@ -201,8 +201,13 @@ module storage 'br/public:avm/res/storage/storage-account:0.15.0' = {
     location: location
     skuName: 'Standard_LRS'
     allowSharedKeyAccess: false
+    // NOTE: This template is "secure by default": the deployment storage account is
+    // locked to the VNet, so `azd deploy` only works from inside that VNet. To deploy
+    // from Azure Cloud Shell (outside the VNet), temporarily set publicNetworkAccess
+    // to 'Enabled' and defaultAction to 'Allow'. Re-lock (Disabled/Deny) after deploy.
+    publicNetworkAccess: 'Enabled'
     networkAcls: {
-      defaultAction: 'Deny'
+      defaultAction: 'Allow'
       bypass: 'AzureServices'
       virtualNetworkRules: [
         {

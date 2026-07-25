@@ -22,3 +22,6 @@ lerna-debug.log*
 
 # Others
 TODO
+
+# Private local notes (never commit)
+MEMO.local.md

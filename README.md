@@ -110,6 +110,10 @@ There are multiple ways to run this sample: locally using Ollama or Azure OpenAI
     ```
   - Your Azure account also needs `Microsoft.Resources/deployments/write` permissions on the subscription level.
 
+> [!NOTE]
+
+
+
 #### Cost estimation
 
 See the [cost estimation](./docs/cost.md) details for running this sample on Azure.
@@ -143,6 +147,24 @@ The deployment process will take a few minutes. Once it's done, you'll see the U
 </div>
 
 You can now open the web app in your browser and start chatting with the bot.
+
+##### How `azd up` works
+
+`azd up` is a shortcut that runs three steps in sequence, driven by two files at the root of the project:
+
+- **`azure.yaml`** — the orchestration map. It tells `azd` what your app is made of (the `webapp` and `api` services, their folders, and their Azure hosts), and defines the `hooks` (custom commands) to run at specific stages.
+- **`infra/main.bicep`** — the infrastructure blueprint. It describes the Azure resources to create (Azure OpenAI, Function App, Static Web App, Virtual Network, etc.) using Bicep, Azure's Infrastructure as Code language.
+
+When you run `azd up`, it performs the following steps:
+
+1. **Provision** (`azd provision`) — reads `infra/main.bicep` and creates the Azure resources.
+2. **Package** (`azd package`) — builds each service's code (this is where the `prepackage` hook in `azure.yaml` runs `npm ci && npm run build:wc`).
+3. **Deploy** (`azd deploy`) — uploads the built code to the resources created in step 1.
+
+The `hooks` in `azure.yaml` run at specific points around these steps. For example, the `postprovision` hook writes the deployed resource values into `packages/api/.env` so you can also run the API locally.
+
+> [!TIP]
+> In short: `azure.yaml` describes **your app** to the `azd` tool, while `main.bicep` describes the **Azure infrastructure** your app runs on. They work together during `azd up`.
 
 ##### (Optional) Using a different framework for the webapp
 
