@@ -201,20 +201,14 @@ module storage 'br/public:avm/res/storage/storage-account:0.15.0' = {
     location: location
     skuName: 'Standard_LRS'
     allowSharedKeyAccess: false
-    // NOTE: This template is "secure by default": the deployment storage account is
-    // locked to the VNet, so `azd deploy` only works from inside that VNet. To deploy
-    // from Azure Cloud Shell (outside the VNet), temporarily set publicNetworkAccess
-    // to 'Enabled' and defaultAction to 'Allow'. Re-lock (Disabled/Deny) after deploy.
-    publicNetworkAccess: 'Enabled'
+    // Policy-compliant secure networking (satisfies "Storage accounts should disable
+    // public network access"): public access is fully disabled and the account is
+    // reached only via private endpoints (blob/queue/table) in the VNet. Deployments
+    // must run from a client inside the VNet (see README).
+    publicNetworkAccess: 'Disabled'
     networkAcls: {
-      defaultAction: 'Allow'
+      defaultAction: 'Deny'
       bypass: 'AzureServices'
-      virtualNetworkRules: [
-        {
-          id: vnet.outputs.subnetResourceIds[0]
-          action: 'Allow'
-        }
-      ]
     }
     blobServices: {
       containers: [
@@ -247,11 +241,169 @@ module vnet 'br/public:avm/res/network/virtual-network:0.5.2' = {
         name: 'app'
         addressPrefix: '10.0.1.0/24'
         delegation: 'Microsoft.App/environments'
-        serviceEndpoints: ['Microsoft.Storage']
+        privateEndpointNetworkPolicies: 'Disabled'
+        privateLinkServiceNetworkPolicies: 'Enabled'
+      }
+      {
+        name: 'private-endpoints'
+        addressPrefix: '10.0.2.0/24'
         privateEndpointNetworkPolicies: 'Disabled'
         privateLinkServiceNetworkPolicies: 'Enabled'
       }
     ]
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Private endpoints + private DNS for the storage account (policy-compliant).
+// Public access is disabled, so Blob/Queue/Table are reached privately from
+// inside the VNet. Deployments must run from a client inside this VNet.
+
+var blobPrivateDnsZoneName = 'privatelink.blob.${environment().suffixes.storage}'
+var queuePrivateDnsZoneName = 'privatelink.queue.${environment().suffixes.storage}'
+var tablePrivateDnsZoneName = 'privatelink.table.${environment().suffixes.storage}'
+
+module blobPrivateDnsZone 'br/public:avm/res/network/private-dns-zone:0.7.1' = {
+  name: 'blob-private-dns-zone'
+  scope: resourceGroup
+  params: {
+    name: blobPrivateDnsZoneName
+    location: 'global'
+    tags: tags
+    virtualNetworkLinks: [
+      {
+        name: 'blob-vnet-link'
+        virtualNetworkResourceId: vnet.outputs.resourceId
+        registrationEnabled: false
+        location: 'global'
+        tags: tags
+      }
+    ]
+  }
+}
+
+module queuePrivateDnsZone 'br/public:avm/res/network/private-dns-zone:0.7.1' = {
+  name: 'queue-private-dns-zone'
+  scope: resourceGroup
+  params: {
+    name: queuePrivateDnsZoneName
+    location: 'global'
+    tags: tags
+    virtualNetworkLinks: [
+      {
+        name: 'queue-vnet-link'
+        virtualNetworkResourceId: vnet.outputs.resourceId
+        registrationEnabled: false
+        location: 'global'
+        tags: tags
+      }
+    ]
+  }
+}
+
+module tablePrivateDnsZone 'br/public:avm/res/network/private-dns-zone:0.7.1' = {
+  name: 'table-private-dns-zone'
+  scope: resourceGroup
+  params: {
+    name: tablePrivateDnsZoneName
+    location: 'global'
+    tags: tags
+    virtualNetworkLinks: [
+      {
+        name: 'table-vnet-link'
+        virtualNetworkResourceId: vnet.outputs.resourceId
+        registrationEnabled: false
+        location: 'global'
+        tags: tags
+      }
+    ]
+  }
+}
+
+module blobPrivateEndpoint 'br/public:avm/res/network/private-endpoint:0.11.0' = {
+  name: 'blob-private-endpoint'
+  scope: resourceGroup
+  params: {
+    name: 'pep-blob-${resourceToken}'
+    location: location
+    tags: tags
+    subnetResourceId: vnet.outputs.subnetResourceIds[1]
+    privateLinkServiceConnections: [
+      {
+        name: 'blobPrivateLinkConnection'
+        properties: {
+          privateLinkServiceId: storage.outputs.resourceId
+          groupIds: ['blob']
+        }
+      }
+    ]
+    privateDnsZoneGroup: {
+      name: 'blobPrivateDnsZoneGroup'
+      privateDnsZoneGroupConfigs: [
+        {
+          name: 'storageBlobARecord'
+          privateDnsZoneResourceId: blobPrivateDnsZone.outputs.resourceId
+        }
+      ]
+    }
+  }
+}
+
+module queuePrivateEndpoint 'br/public:avm/res/network/private-endpoint:0.11.0' = {
+  name: 'queue-private-endpoint'
+  scope: resourceGroup
+  params: {
+    name: 'pep-queue-${resourceToken}'
+    location: location
+    tags: tags
+    subnetResourceId: vnet.outputs.subnetResourceIds[1]
+    privateLinkServiceConnections: [
+      {
+        name: 'queuePrivateLinkConnection'
+        properties: {
+          privateLinkServiceId: storage.outputs.resourceId
+          groupIds: ['queue']
+        }
+      }
+    ]
+    privateDnsZoneGroup: {
+      name: 'queuePrivateDnsZoneGroup'
+      privateDnsZoneGroupConfigs: [
+        {
+          name: 'storageQueueARecord'
+          privateDnsZoneResourceId: queuePrivateDnsZone.outputs.resourceId
+        }
+      ]
+    }
+  }
+}
+
+module tablePrivateEndpoint 'br/public:avm/res/network/private-endpoint:0.11.0' = {
+  name: 'table-private-endpoint'
+  scope: resourceGroup
+  params: {
+    name: 'pep-table-${resourceToken}'
+    location: location
+    tags: tags
+    subnetResourceId: vnet.outputs.subnetResourceIds[1]
+    privateLinkServiceConnections: [
+      {
+        name: 'tablePrivateLinkConnection'
+        properties: {
+          privateLinkServiceId: storage.outputs.resourceId
+          groupIds: ['table']
+        }
+      }
+    ]
+    privateDnsZoneGroup: {
+      name: 'tablePrivateDnsZoneGroup'
+      privateDnsZoneGroupConfigs: [
+        {
+          name: 'storageTableARecord'
+          privateDnsZoneResourceId: tablePrivateDnsZone.outputs.resourceId
+        }
+      ]
+    }
   }
 }
 

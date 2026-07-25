@@ -30,6 +30,10 @@ Building AI applications can be complex and time-consuming, but using accelerato
   <img src="./docs/images/architecture-secure.drawio.png" alt="Application architecture" width="640px" />
 </div>
 
+[¡NOTE]I changed this repo's architecture based security best practice.
+
+
+
 This application is made from multiple components:
 
 - Reusable and customizable web components built with [Lit](https://lit.dev) handling user authentication and providing an AI chat UI. The code is located in the `packages/ai-chat-components` folder.
@@ -267,6 +271,36 @@ This template uses model `gpt-4o-mini` which may not be available in all Azure r
 
 We recommend using `East US 2` if you're unsure of which region to choose.
 
+#### Note: choosing a valid Azure OpenAI model and version
+
+The model, model version, and API version are configurable via `azd` environment variables (defaults live in [`infra/main.parameters.json`](./infra/main.parameters.json)):
+
+| Setting | Env variable | Default |
+| --- | --- | --- |
+| Model name | `AZURE_OPENAI_API_MODEL` | `gpt-4o-mini` |
+| Model version | `AZURE_OPENAI_API_MODEL_VERSION` | `2024-07-18` |
+| API version | `AZURE_OPENAI_API_VERSION` | `2024-02-01` |
+
+Model versions get **deprecated over time**. If `azd up` fails during provisioning with an error like:
+
+```
+ServiceModelDeprecating: The model 'Format:OpenAI,Name:gpt-4o-mini,Version:2024-07-18' is in deprecating state and cannot be used for new deployments.
+```
+
+it means the pinned version is no longer accepted for new deployments. To fix it, list the models currently available in your region and pick a non-deprecated one (check the `Deprecates` column):
+
+```bash
+az cognitiveservices model list -l eastus2 --query "sort_by([?kind=='OpenAI' && starts_with(model.name,'gpt')].{Name:model.name, Version:model.version, Deprecates:model.deprecation.inference}, &Name)" -o table
+```
+
+Then override the values (no file edit required) and redeploy:
+
+```bash
+azd env set AZURE_OPENAI_API_MODEL <a-non-deprecated-model>
+azd env set AZURE_OPENAI_API_MODEL_VERSION <a-non-deprecated-version>
+azd up
+```
+
 ### Security
 
 This template has [Managed Identity](https://learn.microsoft.com/entra/identity/managed-identities-azure-resources/overview) built in to eliminate the need for developers to manage these credentials. Applications can use managed identities to obtain Microsoft Entra tokens without having to handle any secrets in the code. Additionally, we're using [Microsoft Security DevOps GitHub Action](https://github.com/microsoft/security-devops-action) to scan the infrastructure-as-code files and generates a report containing any detected issues.
@@ -276,6 +310,44 @@ This template has [Managed Identity](https://learn.microsoft.com/entra/identity/
 This template has [Managed Identity](https://learn.microsoft.com/entra/identity/managed-identities-azure-resources/overview) built in to eliminate the need for developers to manage these credentials. Applications can use managed identities to obtain Microsoft Entra tokens without having to handle any secrets in the code. Additionally, we're using [Microsoft Security DevOps GitHub Action](https://github.com/microsoft/security-devops-action) to scan the infrastructure-as-code files and generates a report containing any detected issues.
 
 You can Learn more about using Managed Identity with Azure OpenAI in this [tutorial](https://learn.microsoft.com/training/modules/intro-azure-openai-managed-identity-auth-javascript/).
+
+### Deploying in a network-restricted (governed) subscription
+
+This template is **secure by default**: the Function App runs on the Flex Consumption plan
+and its deployment storage account has **public network access disabled**. The storage
+account is reached only through **private endpoints** (blob, queue, and table) that live in
+the `private-endpoints` subnet of the VNet, with matching **private DNS zones** so the
+`privatelink.*.core.windows.net` names resolve to private IPs from inside the VNet.
+
+This design satisfies the common enterprise Azure Policy
+**"Storage accounts should disable public network access"** (built-in
+`b2982f36-99f2-4db5-8eff-283140c09693`), which is assigned as a **Deny** in many corporate
+subscriptions. Because of this, you **cannot** simply enable public access on the storage
+account — the policy will reject it.
+
+**What this means for deployment:** `azd deploy api` uploads the app package to the
+deployment storage account. Since that account is private-endpoint-only, the upload must
+originate from a client that is **inside the VNet**. A machine outside the VNet — including
+**Azure Cloud Shell** — cannot reach the storage account and the deploy will fail with a
+`403`/network error.
+
+To deploy `api` in a governed subscription, run `azd` from a client with a network path
+into the VNet, for example:
+
+- A **jumpbox VM** deployed into a subnet of the same VNet (`vnet-*`), with `azd`, Node.js,
+  and the Azure CLI installed, or
+- A **CI/CD runner** (GitHub Actions self-hosted runner or Azure DevOps agent) that is
+  **VNet-integrated** into the same network.
+
+`azd provision` (creating/updating the infrastructure) can still be run from anywhere,
+since it only calls the Azure control plane. It is only the `azd deploy api` step (data-plane
+upload to private storage) that must run from inside the VNet.
+
+> [!TIP]
+> If your organization instead grants you a policy **exemption** for the storage account,
+> you could allow public access with IP/service-endpoint rules — but the exemption route is
+> usually not available in governed subscriptions, so the private-endpoint path above is the
+> supported approach.
 
 ### Troubleshooting
 
