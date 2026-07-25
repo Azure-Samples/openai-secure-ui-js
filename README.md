@@ -191,7 +191,7 @@ There are multiple ways to run this sample: locally using Ollama or Azure OpenAI
   - Your Azure account also needs `Microsoft.Resources/deployments/write` permissions on the subscription level.
 
 > [!NOTE]
-> This template deploys the `gpt-5.1-mini` model (version `2025-11-13`), which isn't available in every
+> This template deploys the `gpt-5-mini` model (version `2025-08-07`), which isn't available in every
 > region. Before you run `azd up`, check that the model and version are available in your target region
 > (replace `eastus2` with your region):
 >
@@ -205,7 +205,7 @@ There are multiple ways to run this sample: locally using Ollama or Azure OpenAI
 > If the version isn't listed, pick an available one from the output and override the defaults before deploying:
 >
 > ```bash
-> azd env set AZURE_OPENAI_API_MODEL gpt-5.1-mini
+> azd env set AZURE_OPENAI_API_MODEL gpt-5-mini
 > azd env set AZURE_OPENAI_API_MODEL_VERSION <an-available-version>
 > ```
 
@@ -358,7 +358,7 @@ You can find answers to frequently asked questions in the [FAQ](./docs/faq.md).
 
 ### Region availability
 
-This template uses model `gpt-5.1-mini` which may not be available in all Azure regions. Check for [up-to-date region availability](https://learn.microsoft.com/azure/ai-services/openai/concepts/models#standard-deployment-model-availability) and select a region during deployment accordingly.
+This template uses model `gpt-5-mini` which may not be available in all Azure regions. Check for [up-to-date region availability](https://learn.microsoft.com/azure/ai-services/openai/concepts/models#standard-deployment-model-availability) and select a region during deployment accordingly.
 
 We recommend using `East US 2` if you're unsure of which region to choose.
 
@@ -368,14 +368,14 @@ The model, model version, and API version are configurable via `azd` environment
 
 | Setting | Env variable | Default |
 | --- | --- | --- |
-| Model name | `AZURE_OPENAI_API_MODEL` | `gpt-5.1-mini` |
-| Model version | `AZURE_OPENAI_API_MODEL_VERSION` | `2025-11-13` |
+| Model name | `AZURE_OPENAI_API_MODEL` | `gpt-5-mini` |
+| Model version | `AZURE_OPENAI_API_MODEL_VERSION` | `2025-08-07` |
 | API version | `AZURE_OPENAI_API_VERSION` | `2024-02-01` |
 
 Model versions get **deprecated over time**. If `azd up` fails during provisioning with an error like:
 
 ```
-ServiceModelDeprecating: The model 'Format:OpenAI,Name:gpt-5.1-mini,Version:2025-11-13' is in deprecating state and cannot be used for new deployments.
+ServiceModelDeprecating: The model 'Format:OpenAI,Name:gpt-5-mini,Version:2025-08-07' is in deprecating state and cannot be used for new deployments.
 ```
 
 it means the pinned version is no longer accepted for new deployments. To fix it, list the models currently available in your region and pick a non-deprecated one (check the `Deprecates` column):
