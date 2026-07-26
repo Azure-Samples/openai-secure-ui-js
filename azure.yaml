@@ -15,7 +15,7 @@ services:
     project: ./packages/api
     language: ts
     host: function
-    remoteBuild: true
+    remoteBuild: false
 
 hooks:
   prepackage:

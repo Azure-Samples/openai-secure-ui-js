@@ -21,7 +21,7 @@
     "openai": "^4.59.0"
   },
   "devDependencies": {
-    "@types/node": "^20.x",
+    "@types/node": "^22.x",
     "azure-functions-core-tools": "^4.0.5611",
     "typescript": "^5.4.4"
   }

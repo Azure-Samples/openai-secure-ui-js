@@ -168,7 +168,7 @@ module function 'br/public:avm/res/web/site:0.13.0' = {
       }
       runtime: {
         name: 'node'
-        version: '20'
+        version: '22'
       }
     }
     storageAccountResourceId: storage.outputs.resourceId

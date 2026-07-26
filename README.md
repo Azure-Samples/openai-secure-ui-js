@@ -110,7 +110,29 @@ flowchart LR
     func -.telemetry.-> monitor
 ```
 
-This application is made from multiple components:
+### Azure resources
+
+Every `azd up` provisions the following resources inside the resource group:
+
+| Resource | Azure service | Purpose |
+| --- | --- | --- |
+| `stapp-*` | **Azure Static Web Apps** (Standard) | Hosts the frontend web app and provides **Easy Auth** (built-in login with GitHub, AAD, etc.) |
+| `func-api-*` | **Azure Functions** (Flex Consumption, Linux) | Serverless backend API — handles chat requests and calls Azure OpenAI |
+| `asp-*` | **App Service Plan** (Flex Consumption FC1) | The compute plan that backs the Function App |
+| `st*` | **Storage Account** (Standard LRS) | Required by Azure Functions for deployment package, runtime state (blob), triggers (queue), and metadata (table). Public access is **disabled** — reached only via private endpoints |
+| `vnet-*` | **Virtual Network** (`10.0.0.0/16`) | Isolates the backend; the Function App is VNet-integrated inside the `app` subnet |
+| `pep-blob-*` | **Private Endpoint** (blob) | Lets the Function App reach the storage account's Blob service privately |
+| `pep-queue-*` | **Private Endpoint** (queue) | Lets the Function App reach the storage account's Queue service privately |
+| `pep-table-*` | **Private Endpoint** (table) | Lets the Function App reach the storage account's Table service privately |
+| `privatelink.blob.*` | **Private DNS Zone** | Resolves `<account>.blob.core.windows.net` to the private blob endpoint IP |
+| `privatelink.queue.*` | **Private DNS Zone** | Resolves `<account>.queue.core.windows.net` to the private queue endpoint IP |
+| `privatelink.table.*` | **Private DNS Zone** | Resolves `<account>.table.core.windows.net` to the private table endpoint IP |
+| `oai-*` | **Azure OpenAI** (AI Services, S0) | Hosts the GPT model deployment; accessed by the Function App via **Managed Identity** (no keys) |
+| `appi-*` | **Application Insights** | Collects telemetry (requests, exceptions, traces) from the Function App |
+| `log-*` | **Log Analytics Workspace** | Backend store for Application Insights data |
+| `dash-*` | **Azure Portal Dashboard** | Pre-built dashboard wired to Application Insights metrics |
+
+
 
 - Reusable and customizable web components built with [Lit](https://lit.dev) handling user authentication and providing an AI chat UI. The code is located in the `packages/ai-chat-components` folder.
 
@@ -119,6 +141,21 @@ This application is made from multiple components:
 - A serverless API built with [Azure Functions](https://learn.microsoft.com/azure/azure-functions/functions-overview?pivots=programming-language-javascript) and using [OpenAI SDK](https://github.com/openai/openai-node) to generate responses to the user chat queries. The code is located in the `packages/api` folder.
 
 We use the [HTTP protocol for AI chat apps](https://aka.ms/chatprotocol) to communicate between the web app and the API.
+
+### Monorepo structure
+
+This repo is a **monorepo**: multiple independent Node.js projects ("packages") live together under one `packages/` folder, each with its own `package.json` and dependencies. 
+The root `package.json` ties them together using npm **workspaces**, so a single `npm install` at the root installs everything. The root `azure.yaml` maps each package to its Azure host.
+
+| Package | Purpose |
+| --- | --- |
+| `packages/api` | Azure Functions backend (TypeScript) |
+| `packages/webapp-html` | Plain HTML frontend |
+| `packages/webapp-react` | React frontend |
+| `packages/webapp-vue` | Vue frontend |
+| `packages/webapp-angular` | Angular frontend |
+| `packages/webapp-svelte` | Svelte frontend |
+| `packages/ai-chat-components` | Reusable web components shared by all frontends |
 
 ## Features
 
